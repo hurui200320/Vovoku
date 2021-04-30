@@ -1,0 +1,37 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.32'
+}
+
+group 'info.skyblond.vovoku'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+    // log
+    implementation "ch.qos.logback:logback-classic:1.2.3"
+    // javalin
+    implementation 'io.javalin:javalin:3.13.6'
+    // ktorm
+    implementation group: 'me.liuwj.ktorm', name: 'ktorm-core', version: '3.1.0'
+    implementation group: 'me.liuwj.ktorm', name: 'ktorm-support-postgresql', version: '3.1.0'
+    implementation group: 'me.liuwj.ktorm', name: 'ktorm-jackson', version: '3.1.0'
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "11"
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "11"
+}
+
+test {
+    useJUnitPlatform()
+}
