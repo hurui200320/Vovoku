@@ -27,6 +27,8 @@
 + Ktorm（ORM数据库支持）
 + PostgreSQL（数据库）
 + Docker compose（环境治理）
++ YAML配置文件
++ DL4J训练框架
 
 前端技术栈如下：
 + Java/Kotlin（主要开发语言）
