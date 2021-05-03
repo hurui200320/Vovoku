@@ -44,7 +44,7 @@ public class JedisLock implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        jedis.close();
+        this.jedis.quit();
     }
 
     /**
@@ -66,7 +66,7 @@ public class JedisLock implements AutoCloseable {
                 long theTime = Long.parseLong(parts[1]);
                 return new Lock(theUUID, theTime);
             } catch (Exception any) {
-                return NULL_LOCK;
+                return JedisLock.NULL_LOCK;
             }
         }
 
@@ -174,10 +174,13 @@ public class JedisLock implements AutoCloseable {
     public boolean renew() throws InterruptedException {
         // get current lock in redis
         final Lock lock = Lock.fromString(this.jedis.get(this.lockKey));
-        // if not from this instance or not expired, then return false
+        // if not from this instance, then return false
         if (!lock.isExpiredOrMine(this.lockUUID)) {
-            return false;
+            System.out.println(lock.uuid);
+            System.out.println(this.lockUUID);
+            return lock.uuid == this.lockUUID;
         }
+
         // otherwise acquire a new lock
         return this.acquire(this.jedis);
     }

@@ -1,56 +1,60 @@
 package info.skyblond.vovoku.backend
 
+import info.skyblond.vovoku.commons.*
 import org.slf4j.LoggerFactory
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPubSub
-import java.util.concurrent.CountDownLatch
+import kotlin.random.Random
 
 
 fun main() {
     val logger = LoggerFactory.getLogger("Application")
 
-    val pubWaitLatch = CountDownLatch(1)
-    val subWaitLatch = CountDownLatch(1)
-
     val jedisSub = object : JedisPubSub() {
         override fun onMessage(channel: String?, message: String?) {
             logger.info("Get message from channel $channel: $message")
-            subWaitLatch.countDown()
-        }
-
-        override fun onSubscribe(channel: String?, subscribedChannels: Int) {
-            logger.info("Sub channel: $channel")
-        }
-
-        override fun onUnsubscribe(channel: String?, subscribedChannels: Int) {
-            logger.info("Unsub channel: $channel")
+            // TODO with message
         }
     }
 
     Thread {
-        val jedis = Jedis("127.0.0.1")
-        pubWaitLatch.await()
-        logger.info("Publishing message...")
-        jedis.publish("test", "This is a test message, can be a task json")
-        Thread.sleep(1000)
-        logger.info("Publisher quit")
-        jedis.quit()
+        Jedis("127.0.0.1").also {
+            it.subscribe(jedisSub, RedisTaskReportChannel)
+            it.quit()
+        }
     }.start()
 
-    Thread {
-        val jedis = Jedis("127.0.0.1")
-        logger.info("Start sub")
-        jedis.subscribe(jedisSub, "test")
-        logger.info("Sub is done")
-        jedis.quit()
-    }.start()
 
-    Thread.sleep(1000)
+    val jedis = Jedis("127.0.0.1")
+    jedis.publish(
+        RedisTaskDistributionChannel,
+        JacksonJsonUtil.objectToJson(
+            TrainingTaskDistro(
+                Random.nextInt(),
+                ModelTrainingParameter(
+                    128,
+                    3,
+                    28 * 28,
+                    1000,
+                    10,
+                    ModelTrainingParameter.Updater.Nesterovs,
+                    listOf(0.1, 0.9),
+                    1e-4,
+                    123L
+                ),
+                "file://D:\\Git\\github\\Vovoku\\worker\\train_image_byte.bin",
+                "file://D:\\Git\\github\\Vovoku\\worker\\train_label_byte.bin",
+                60000,
+                "file://D:\\Git\\github\\Vovoku\\worker\\test_image_byte.bin",
+                "file://D:\\Git\\github\\Vovoku\\worker\\test_label_byte.bin",
+                10000,
+                "",
+                "file://D:\\Git\\github\\Vovoku\\test.model",
+                ""
+            )
+        )
+    )
 
-    pubWaitLatch.countDown()
-    subWaitLatch.await()
-    logger.info("Unsubing channel...")
-    jedisSub.unsubscribe()
 
 //    JavalinJackson.configure(ObjectMapper())
 //    val app = Javalin.create().start(7000)
@@ -60,17 +64,6 @@ fun main() {
 //        })
 //    }
 
-//    val hikariDataSource = HikariDataSource()
-//    hikariDataSource.jdbcUrl = "jdbc:postgresql://localhost:5432/postgres"
-//    hikariDataSource.username = "postgres"
-//    hikariDataSource.password = "passwr0d"
-//    hikariDataSource.dataSourceClassName = "org.postgresql.ds.PGSimpleDataSource"
-//
-//    val database = Database.connect(
-//        dataSource = hikariDataSource,
-//        dialect = PostgreSqlDialect(),
-//        logger = Slf4jLoggerAdapter(logger)
-//    )
 //
 //    database.sequenceOf(Users)
 //        .add(User {

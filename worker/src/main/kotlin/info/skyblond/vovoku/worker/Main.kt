@@ -1,85 +1,176 @@
 package info.skyblond.vovoku.worker
 
+import info.skyblond.vovoku.commons.*
+import info.skyblond.vovoku.commons.redis.JedisLock
 import info.skyblond.vovoku.worker.datavec.CustomDataFetcher
 import info.skyblond.vovoku.worker.datavec.CustomDataSetIterator
-import org.deeplearning4j.datasets.iterator.impl.MnistDataSetIterator
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
-import org.deeplearning4j.optimize.listeners.ScoreIterationListener
 import org.nd4j.evaluation.classification.Evaluation
 import org.nd4j.evaluation.classification.ROCMultiClass
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator
-import org.nd4j.linalg.learning.config.Nesterovs
 import org.slf4j.LoggerFactory
+import redis.clients.jedis.JedisPool
+import redis.clients.jedis.JedisPoolConfig
+import redis.clients.jedis.JedisPubSub
 import java.io.File
+import java.time.Duration
+import kotlin.system.exitProcess
 
 
 fun main() {
     val logger = LoggerFactory.getLogger("Worker")
-    // 初始化
-    // 初始化DL4J运行时？
-    // 订阅Redis消息
+    val config = JacksonYamlUtil.readOrInitConfigFile(File("./config.yaml"), Config())
 
-    // 循环工作
-    // 等待并取得一个Task
-    // 竞争TaskId锁
-    // 成功后注册Worker
-    // 获取训练资源
-    // 初始化模型
-    // 开始训练
-    // 完成后打包模型
-    // 上传模型文件
+    // init
+    val jedisPoolConfig = JedisPoolConfig()
+    jedisPoolConfig.maxTotal = 100
+    jedisPoolConfig.maxIdle = 100
+    val jedisPool = JedisPool(jedisPoolConfig, config.redisHost, config.redisPort)
+    val lockDuration = Duration.ofMinutes(5)
 
-    val numRows = 28
-    val numColumns = 28
-    val outputNum = 10 // number of output classes
+    var currentTask: TrainingTaskDistro? = null
+    var jedisLock: JedisLock? = null
+    var isBusy = false
 
-    val batchSize = 128 // batch size for each epoch
-    val rngSeed = 123L // random number seed for reproducibility
-    val numEpochs = 15 // number of epochs to perform
+    val jedisSub = object : JedisPubSub() {
+        override fun onMessage(channel: String?, message: String?) {
+            synchronized(isBusy) {
+                if (isBusy) return
+                // if not busy, try lock this task
+                val task = JacksonJsonUtil.jsonToObject(message!!, TrainingTaskDistro::class.java)
+                logger.info("Get task id: ${task.taskId}")
+                jedisLock = JedisLock(jedisPool.resource, "task.${task.taskId}", lockDuration)
+                if (!jedisLock!!.acquire()) {
+                    logger.info("Cannot lock ${jedisLock!!.lockKey}")
+                    return
+                }
+                // locked, then start refresh thread
+                Thread {
+                    val localLogger = LoggerFactory.getLogger("LockUpdater")
+                    val oldKey = jedisLock!!.lockKey
+                    localLogger.info("Start using lock key: $oldKey")
+                    while (isBusy && jedisLock?.lockKey == oldKey) {
+                        isBusy = false
+                        if (!jedisLock!!.renew()) {
+                            logger.error("Failed renew lock: ${jedisLock!!.lockKey}")
+                            exitProcess(-1)
+                        }
+                        isBusy = true
+                        localLogger.info("Renewed lock: ${jedisLock!!.lockKey}")
+                        Thread.sleep(jedisLock!!.lockExpiryDuration.toMillis() / 2)
+                    }
+                    localLogger.info("Old key '$oldKey' expired")
+                }.start()
 
-    val trainCount = 60000
-    val testCount = 10000
+                // mark busy, enable training loop
+                currentTask = task
+                isBusy = true
+            }
+        }
+    }
 
-    //Get the DataSetIterators:
-    val trainFetcher = CustomDataFetcher(
-        File("./train_image_byte.bin").readBytes(),
-        File("./train_label_byte.bin").readBytes(),
-        trainCount, rngSeed
-    )
-    val customTrain: DataSetIterator = CustomDataSetIterator(batchSize, trainFetcher)
-    val testFetcher = CustomDataFetcher(
-        File("./test_image_byte.bin").readBytes(),
-        File("./test_label_byte.bin").readBytes(),
-        testCount, rngSeed
-    )
-    val customTest: DataSetIterator = CustomDataSetIterator(batchSize, testFetcher)
+    Thread {
+        val jedis = jedisPool.resource
+        jedis.subscribe(jedisSub, RedisTaskDistributionChannel)
+        jedis.quit()
+    }.start()
 
-    logger.info("Build model....")
-    val conf = getNeuralNetworkConfig(
-        rngSeed, Nesterovs(0.006, 0.9),
-        1e-4, 1000, numColumns * numRows, outputNum
-    )
+    Runtime.getRuntime().addShutdownHook(Thread {
+        jedisSub.unsubscribe()
+        jedisLock?.release()
+        jedisPool.close()
+    })
 
-    val model = MultiLayerNetwork(conf)
-    model.init()
-    //print the score with every 1 iteration
-    model.setListeners(ScoreIterationListener(1))
+    // wait 1s for all thread prepared
+    Thread.sleep(1000)
 
-    logger.info("Train model....")
-    model.fit(customTrain, numEpochs)
+    while (true) {
+        while (!isBusy) {
+            // sleep 5s for next query
+            Thread.sleep(5 * 1000)
+        }
 
-    logger.info("Evaluate model....")
-    val eval = model.evaluate<Evaluation>(customTest)
-    println(eval.accuracy())
-    println(eval.precision())
-    println(eval.recall())
+        val jedis = jedisPool.resource
 
-// evaluate ROC and calculate the Area Under Curve
-    val roc = model.evaluateROCMultiClass<ROCMultiClass>(customTest, 0)
-    roc.calculateAUC(0)
+        try {
+            logger.info("Start training task: ${currentTask!!.taskId}")
 
-// optionally, you can print all stats from the evaluations
-    println(eval.stats())
-    println(roc.stats())
+            // parse file path
+            val trainingParameter = currentTask!!.parameter
+            val trainFetcher = CustomDataFetcher(
+                FilePathUtil.readFromFilePath(currentTask!!.trainingDataBytePath, currentTask!!.dataAccessToken)
+                    .readBytes(),
+                FilePathUtil.readFromFilePath(currentTask!!.trainingLabelBytePath, currentTask!!.dataAccessToken)
+                    .readBytes(),
+                currentTask!!.trainingSamplesCount, trainingParameter.seed
+            )
+            val customTrain: DataSetIterator = CustomDataSetIterator(trainingParameter.batchSize, trainFetcher)
+            val testFetcher = CustomDataFetcher(
+                FilePathUtil.readFromFilePath(currentTask!!.testDataBytePath, currentTask!!.dataAccessToken)
+                    .readBytes(),
+                FilePathUtil.readFromFilePath(currentTask!!.testLabelBytePath, currentTask!!.dataAccessToken)
+                    .readBytes(),
+                currentTask!!.testSamplesCount, trainingParameter.seed
+            )
+            val customTest: DataSetIterator = CustomDataSetIterator(trainingParameter.batchSize, testFetcher)
 
+            val updater = parseUpdater(trainingParameter.updater, trainingParameter.updateParameters)
+
+            val conf = getNeuralNetworkConfig(
+                trainingParameter.seed, updater,
+                trainingParameter.l2,
+                trainingParameter.hiddenLayerSize,
+                trainingParameter.inputSize,
+                trainingParameter.outputSize
+            )
+
+            val model = MultiLayerNetwork(conf)
+            // TODO read out model and continue training
+            model.init()
+            model.fit(customTrain, trainingParameter.epochs)
+            val eval = model.evaluate<Evaluation>(customTest)
+            val roc = model.evaluateROCMultiClass<ROCMultiClass>(customTest, 0)
+
+            val rocValue = roc.calculateAUC(0)
+
+            val report = TrainingTaskReport(
+                currentTask!!.taskId,
+                true,
+                "OK",
+                eval.stats(),
+                eval.accuracy(),
+                eval.precision(),
+                eval.recall(),
+                roc.stats(),
+                rocValue
+            )
+
+            val temp = File.createTempFile("task_", currentTask!!.taskId.toString())
+            model.save(temp, true)
+            val output = FilePathUtil.writeToFilePath(currentTask!!.modelSavePath, currentTask!!.modelAccessToken)
+            output.write(temp.readBytes())
+            output.close()
+            temp.delete()
+
+            jedis.publish(
+                RedisTaskReportChannel, JacksonJsonUtil.objectToJson(report)
+            )
+            logger.info("Finished task: ${currentTask!!.taskId}")
+        } catch (e: Exception) {
+            logger.error("Error when training task: ${currentTask!!.taskId}", e)
+            jedis.publish(
+                RedisTaskReportChannel, JacksonJsonUtil.objectToJson(
+                    TrainingTaskReport(
+                        currentTask!!.taskId,
+                        false,
+                        e.localizedMessage
+                    )
+                )
+            )
+        } finally {
+            jedisLock!!.release()
+            currentTask = null
+            isBusy = false
+        }
+    }
 }

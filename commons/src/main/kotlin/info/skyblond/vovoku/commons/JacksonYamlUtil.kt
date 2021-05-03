@@ -5,7 +5,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import kotlin.reflect.KClass
 
 
 object JacksonYamlUtil {
@@ -14,12 +13,12 @@ object JacksonYamlUtil {
 
     fun <T> readYamlFile(file: File, clazz: Class<T>): T = yamlMapper.readValue(file, clazz)
 
-    fun <T> writeYamlFile(file: File, obj: T) = yamlMapper.writeValue(file, obj)
+    fun writeYamlFile(file: File, obj: Any) = yamlMapper.writeValue(file, obj)
 
-    inline fun <reified T> readOrInitConfigFile(file: File, default: T): T {
+    inline fun <reified T : Any> readOrInitConfigFile(file: File, default: T): T {
         return try {
             readYamlFile(file, T::class.java)
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             logger.warn("Cannot read config file '${file.absolutePath}': ", e)
             logger.warn("Creating default config...")
             writeYamlFile(file, default)
