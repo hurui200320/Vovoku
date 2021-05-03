@@ -1,4 +1,6 @@
 rootProject.name = 'Vovoku'
 include 'frontend'
 include 'backend'
+include 'worker'
+include 'commons'
 

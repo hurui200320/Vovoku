@@ -9,8 +9,8 @@ services:
     ports:
       - 5432:5432
 
-  adminer:
-    image: adminer
+  redis:
+    image: redis
     restart: always
     ports:
-      - 8080:8080
+      - 6379:6379

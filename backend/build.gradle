@@ -1,10 +1,15 @@
 plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm' version '1.4.32'
+    id 'application'
 }
 
 group 'info.skyblond.vovoku'
 version '1.0-SNAPSHOT'
+
+application {
+    mainClass = 'info.skyblond.vovoku.backend.MainKt'
+}
 
 repositories {
     mavenCentral()
@@ -16,24 +21,21 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.+'
     // log
     implementation 'ch.qos.logback:logback-classic:1.2.+'
+
     // javalin
     implementation 'io.javalin:javalin:3.13.+'
-    // ktorm
+
+    // database
     implementation 'me.liuwj.ktorm:ktorm-core:3.1.+'
     implementation 'me.liuwj.ktorm:ktorm-support-postgresql:3.1.+'
     implementation 'me.liuwj.ktorm:ktorm-jackson:3.1.+'
-    // TODO postgresql driver and hikaricp
-    // jackson and yaml
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.+'
-    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.+'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.+'
-    implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.12.+'
-    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.+'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.12.+'
-    // DL4J
-    implementation 'org.deeplearning4j:deeplearning4j-core:1.0.0-beta7'
-    implementation 'org.bytedeco:cuda-platform-redist:10.2-7.6-1.5.3'
-    implementation 'org.deeplearning4j:deeplearning4j-cuda-10.2:1.0.0-beta7'
+    implementation 'com.zaxxer:HikariCP:4.0.3'
+    implementation 'org.postgresql:postgresql:42.2.20'
+
+    // Redis
+    implementation 'redis.clients:jedis:3.5.1'
+    // commons
+    implementation project(":commons")
 }
 
 compileKotlin {

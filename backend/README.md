@@ -25,7 +25,7 @@
 特权用户仅提供基础的管理功能，诸如图片、用户、模型管理（增删改查），不提供图片上传、模型训练等功能。
 
 ### 环境配置
-读取YAML文件作为环境配置。
+读取YAML文件作为环境配置
 
 ## 数据库实体
 
@@ -38,31 +38,74 @@
 
 初始化SQL：
 ```sql
+create table "user"
+(
+    user_id  serial      not null
+        constraint user_pk
+            primary key,
+    username varchar(50) not null,
+    password varchar(50) not null
+);
 
+alter table "user"
+    owner to postgres;
+
+create unique index user_user_id_uindex
+    on "user" (user_id);
+
+create unique index user_username_uindex
+    on "user" (username);
 ```
 
 ### PictureTag
 
-| TagID | FileName | 所属用户Id | 标定数据 | 
+| TagID | FilePath | 所属用户Id | 标定数据 | 
 | :----: | :----: | :----: | :----: |
-| integer  | varchar(50) | varchar(50) | text |
+| integer  | json | integer | json |
 | 非空、主键、唯一、自增  | 非空 | 非空 | 非空 |
 
 初始化SQL：
 ```sql
+create table picture_tag
+(
+	tag_id serial not null,
+	file_path text not null,
+	user_id int not null,
+	tag_data json not null
+);
 
+create unique index picture_tag_tag_id_uindex
+	on picture_tag (tag_id);
+
+alter table picture_tag
+	add constraint picture_tag_pk
+		primary key (tag_id);
 ```
 
 ### ModelInfo
 
-| ModelID | FileName | 所属用户Id | 创建信息 | 训练状态 |
+| ModelID | FilePath | 所属用户Id | 创建信息 | 训练状态 |
 | :----: | :----: | :----: | :----: | :----: |
-| integer  | varchar(50) | varchar(50) | text | varchar(50) |
-| 非空、主键、唯一、自增  | 非空 | 非空 | 非空 | 非空 |
+| integer  | text | integer | json | json |
+| 非空、主键、唯一、自增  |  | 非空 | 非空 | 非空 |
 
 初始化SQL：
 ```sql
+create table model_info
+(
+	model_id serial not null,
+	file_path text,
+	user_id int not null,
+	create_info json not null,
+	training_info json not null
+);
 
+create unique index model_info_model_id_uindex
+	on model_info (model_id);
+
+alter table model_info
+	add constraint model_info_pk
+		primary key (model_id);
 ```
 
 ## API说明

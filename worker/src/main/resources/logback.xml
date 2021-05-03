@@ -1,6 +1,4 @@
-<configuration
-        debug="false"
->
+<configuration>
 
     <property name="HOME_LOG" value="logs/app.log"/>
 
