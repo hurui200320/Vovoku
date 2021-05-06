@@ -9,7 +9,7 @@ import kotlin.random.Random
 
 class WorkerTest {
     @Test
-    fun demo(){
+    fun demo() {
 
         val logger = LoggerFactory.getLogger("Application")
 
@@ -37,7 +37,8 @@ class WorkerTest {
                     ModelTrainingParameter(
                         128,
                         3,
-                        28 * 28,
+                        28,
+                        28,
                         1000,
                         10,
                         ModelTrainingParameter.Updater.Nesterovs,

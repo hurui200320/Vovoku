@@ -26,6 +26,8 @@ dependencies {
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.+'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.12.+'
 
+    implementation 'javax.xml.bind:jaxb-api:2.3.1'
+
 }
 
 test {

@@ -1,10 +1,15 @@
 plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm' version '1.4.32'
+    id 'application'
 }
 
 group 'info.skyblond.vovoku'
 version '1.0-SNAPSHOT'
+
+application {
+    mainClass = 'info.skyblond.vovoku.frontend.MainKt'
+}
 
 repositories {
     mavenCentral()
@@ -14,8 +19,10 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
-
+    // log
     implementation "ch.qos.logback:logback-classic:1.2.3"
+    // okhttp
+    implementation "com.squareup.okhttp3:okhttp:4.9.0"
     // commons
     implementation project(":commons")
 }

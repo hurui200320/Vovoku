@@ -1,5 +1,8 @@
 package info.skyblond.vovoku.backend.config
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import info.skyblond.vovoku.commons.CryptoUtil
+
 data class RedisConfig(
     val host: String = "localhost",
     val port: Int = 6379
@@ -12,13 +15,14 @@ data class DatabaseConfig(
     val username: String = "postgres",
     val password: String = ""
 ) {
-    val jdbcUrl
-        get() = "jdbc:postgresql://$host:$port/$username"
+    @JsonIgnore
+    val jdbcUrl = "jdbc:postgresql://$host:$port/$username"
 }
 
 data class ApiConfig(
     val host: String = "localhost",
-    val port: Int = 7000
+    val port: Int = 7000,
+    val publicKeySpec: CryptoUtil.RSAKeySpec = CryptoUtil.RSAKeySpec("00", "00")
 )
 
 data class Config(

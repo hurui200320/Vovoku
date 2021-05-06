@@ -1,10 +1,8 @@
 package info.skyblond.vovoku.backend.database
 
-import info.skyblond.vovoku.backend.ModelCreateInfo
-import info.skyblond.vovoku.backend.ModelTrainingInfo
-import info.skyblond.vovoku.backend.PictureTagEntry
-import info.skyblond.vovoku.backend.database.PictureTags.bindTo
-import info.skyblond.vovoku.backend.database.PictureTags.primaryKey
+import info.skyblond.vovoku.commons.models.ModelCreateInfo
+import info.skyblond.vovoku.commons.models.ModelTrainingInfo
+import info.skyblond.vovoku.commons.models.PictureTagEntry
 import me.liuwj.ktorm.jackson.json
 import me.liuwj.ktorm.schema.Table
 import me.liuwj.ktorm.schema.int

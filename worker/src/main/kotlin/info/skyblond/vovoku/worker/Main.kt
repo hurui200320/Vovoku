@@ -14,8 +14,6 @@ import redis.clients.jedis.JedisPoolConfig
 import redis.clients.jedis.JedisPubSub
 import java.io.File
 import java.time.Duration
-import kotlin.system.exitProcess
-
 
 fun main() {
     val logger = LoggerFactory.getLogger("Worker")
@@ -39,7 +37,7 @@ fun main() {
                 // if not busy, try lock this task
                 val task = JacksonJsonUtil.jsonToObject(message!!, TrainingTaskDistro::class.java)
                 logger.info("Get task id: ${task.taskId}")
-                jedisLock = JedisLock(jedisPool.resource, "task.${task.taskId}", lockDuration)
+                jedisLock = JedisLock(jedisPool.resource, "$RedisTaskLockKeyPrefix${task.taskId}", lockDuration)
                 if (!jedisLock!!.acquire()) {
                     logger.info("Cannot lock ${jedisLock!!.lockKey}")
                     return
@@ -51,16 +49,16 @@ fun main() {
                     localLogger.info("Start using lock key: $oldKey")
                     while (isBusy && jedisLock?.lockKey == oldKey) {
                         isBusy = false
-                        if (!jedisLock!!.renew()) {
-                            logger.error("Failed renew lock: ${jedisLock!!.lockKey}")
-                            exitProcess(-1)
-                        }
+                        require(jedisLock!!.renew()) { "Failed renew lock: ${jedisLock!!.lockKey}" }
                         isBusy = true
                         localLogger.info("Renewed lock: ${jedisLock!!.lockKey}")
                         Thread.sleep(jedisLock!!.lockExpiryDuration.toMillis() / 2)
                     }
                     localLogger.info("Old key '$oldKey' expired")
-                }.start()
+                }.also {
+                    it.isDaemon = true
+                    it.start()
+                }
 
                 // mark busy, enable training loop
                 currentTask = task
@@ -73,7 +71,10 @@ fun main() {
         val jedis = jedisPool.resource
         jedis.subscribe(jedisSub, RedisTaskDistributionChannel)
         jedis.quit()
-    }.start()
+    }.also {
+        it.isDaemon = true
+        it.start()
+    }
 
     Runtime.getRuntime().addShutdownHook(Thread {
         jedisSub.unsubscribe()
@@ -120,7 +121,7 @@ fun main() {
                 trainingParameter.seed, updater,
                 trainingParameter.l2,
                 trainingParameter.hiddenLayerSize,
-                trainingParameter.inputSize,
+                trainingParameter.inputWidth * trainingParameter.inputHeight,
                 trainingParameter.outputSize
             )
 

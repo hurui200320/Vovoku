@@ -5,7 +5,8 @@ package info.skyblond.vovoku.commons
 data class ModelTrainingParameter(
     val batchSize: Int,
     val epochs: Int,
-    val inputSize: Int,
+    val inputWidth: Int,
+    val inputHeight: Int,
     val hiddenLayerSize: Int,
     val outputSize: Int,
     val updater: Updater,
