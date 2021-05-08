@@ -45,7 +45,7 @@ object AdminUserHandler : AdminCRUDHandler<AdminUserRequest>(AdminUserRequest::c
     }
 
     override fun handleRead(ctx: Context, request: AdminUserRequest) {
-        val result = query(request).map { DatabaseUserPojo(it.userId, it.username, it.password) }
+        val result = query(request).map { it.toPojo() }
         ctx.json(result)
     }
 
@@ -56,6 +56,10 @@ object AdminUserHandler : AdminCRUDHandler<AdminUserRequest>(AdminUserRequest::c
         val entity = User {
             username = request.pojo.username!!
             password = request.pojo.password!!
+        }
+
+        if (database.sequenceOf(Users).find { it.username eq request.pojo.username!! } != null) {
+            throw BadRequestResponse("Duplicate entity in database")
         }
 
         val count = database.sequenceOf(Users).add(entity)
@@ -71,7 +75,9 @@ object AdminUserHandler : AdminCRUDHandler<AdminUserRequest>(AdminUserRequest::c
      * */
     override fun handleUpdate(ctx: Context, request: AdminUserRequest) {
         val query = query(request, false)
-        require(query.totalRecords == 1)
+        if(query.totalRecords != 1){
+            throw BadRequestResponse("Cannot update multiple entity at once")
+        }
         val entity = query.first()
         entity.update(request.pojo)
         ctx.json(entity.toPojo())

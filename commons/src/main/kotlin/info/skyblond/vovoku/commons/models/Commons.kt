@@ -34,15 +34,13 @@ enum class ModelTrainingStatus {
 
 
 data class PictureTagEntry(
-    val x: Int,
-    val y: Int,
     val width: Int,
     val height: Int,
+    val channelCount: Int,
     val tag: Int
 ) {
     init {
-        require(x >= 0) { "Field 'x' must bigger than 0" }
-        require(y >= 0) { "Field 'y' must bigger than 0" }
+        require(channelCount == 1 || channelCount == 3) { "Field 'channelCount' must 1 or 3" }
         require(width >= 0) { "Field 'width' must bigger than 0" }
         require(height >= 0) { "Field 'height' must bigger than 0" }
         require(tag in 0..9) { "Field 'tag' must in range 0 to 9" }

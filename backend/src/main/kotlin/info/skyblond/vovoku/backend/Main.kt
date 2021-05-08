@@ -1,8 +1,8 @@
 package info.skyblond.vovoku.backend
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import info.skyblond.vovoku.backend.config.ConfigUtil
 import info.skyblond.vovoku.backend.handler.admin.AdminCRUDHandler
+import info.skyblond.vovoku.backend.handler.admin.AdminPictureHandler
 import info.skyblond.vovoku.backend.handler.admin.AdminUserHandler
 import info.skyblond.vovoku.commons.*
 import io.javalin.Javalin
@@ -11,6 +11,7 @@ import io.javalin.apibuilder.ApiBuilder.post
 import io.javalin.core.util.Header
 import io.javalin.http.UnauthorizedResponse
 import io.javalin.plugin.json.JavalinJackson
+import org.postgresql.util.PSQLException
 import org.slf4j.LoggerFactory
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPubSub
@@ -59,15 +60,17 @@ fun main() {
             }
         }
         path("user") {
-
+            // TODO 上传文件，数据部分小于4KB则写入数据库 base64://${data}
+            //      否则写入文件 file://...path///
+            //      只写入字节数据，一个字节一个单色亮度值（0-黑，255-亮）
+            //      元数据存入TagInfo：宽、高、通道数
         }
         path("admin") {
             path("users") {
                 post(AdminUserHandler)
             }
             path("pictures") {
-                post { ctx ->
-                }
+                post(AdminPictureHandler)
             }
             path("models") {
                 post { ctx ->
