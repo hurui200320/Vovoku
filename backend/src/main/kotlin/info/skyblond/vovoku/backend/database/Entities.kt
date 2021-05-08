@@ -55,14 +55,4 @@ interface ModelInfo : Entity<ModelInfo> {
     fun toPojo(): DatabaseModelInfoPojo = DatabaseModelInfoPojo(
         modelId, filePath, userId, createInfo, trainingInfo
     )
-
-    fun update(pojo: DatabaseModelInfoPojo) {
-        require(modelId == pojo.modelId) { "Different model id" }
-        pojo.filePath?.let { filePath = it }
-        pojo.trainingInfo?.let {
-            trainingInfo.statusList.clear()
-            trainingInfo.statusList.addAll(it.statusList)
-        }
-        flushChanges()
-    }
 }

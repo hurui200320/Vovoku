@@ -2,6 +2,7 @@ package info.skyblond.vovoku.backend
 
 import info.skyblond.vovoku.backend.config.ConfigUtil
 import info.skyblond.vovoku.backend.handler.admin.AdminCRUDHandler
+import info.skyblond.vovoku.backend.handler.admin.AdminModelHandler
 import info.skyblond.vovoku.backend.handler.admin.AdminPictureHandler
 import info.skyblond.vovoku.backend.handler.admin.AdminUserHandler
 import info.skyblond.vovoku.commons.*
@@ -11,7 +12,6 @@ import io.javalin.apibuilder.ApiBuilder.post
 import io.javalin.core.util.Header
 import io.javalin.http.UnauthorizedResponse
 import io.javalin.plugin.json.JavalinJackson
-import org.postgresql.util.PSQLException
 import org.slf4j.LoggerFactory
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPubSub
@@ -73,10 +73,8 @@ fun main() {
                 post(AdminPictureHandler)
             }
             path("models") {
-                post { ctx ->
-                }
+                post(AdminModelHandler)
             }
-
         }
     }
 
@@ -134,18 +132,6 @@ fun main() {
             )
         )
     )
-
-
-//
-//    database.sequenceOf(Users)
-//        .add(User {
-//            username = "hurui"
-//            password = CryptoUtil.md5("some password")
-//        })
-//
-//    println(database.sequenceOf(Users)
-//        .find { it.username eq "hurui" })
-
 
 }
 
