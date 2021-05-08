@@ -25,7 +25,7 @@ interface PictureTag : Entity<PictureTag> {
     val tagId: Int
     val filePath: String
     val userId: Int
-    val tagData: MutableList<PictureTagEntry>
+    var tagData: PictureTagEntry
 
     fun toPojo(): DatabasePictureTagPojo = DatabasePictureTagPojo(
         tagId, filePath, userId, tagData
@@ -34,8 +34,9 @@ interface PictureTag : Entity<PictureTag> {
     fun update(pojo: DatabasePictureTagPojo) {
         require(tagId == pojo.tagId) { "Different tag id" }
         pojo.tagData?.let {
-            tagData.clear()
-            tagData.addAll(it)
+            // only update tag number
+            val newPojo = PictureTagEntry(tagData.width, tagData.height, tagData.channelCount, it.tag)
+            tagData = newPojo
         }
         flushChanges()
     }

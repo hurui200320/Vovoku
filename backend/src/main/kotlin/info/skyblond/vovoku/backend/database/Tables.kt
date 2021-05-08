@@ -19,7 +19,7 @@ object PictureTags : Table<PictureTag>("picture_tag") {
     val tagId = int("tag_id").primaryKey().bindTo { it.tagId }
     val filePath = text("file_path").bindTo { it.filePath }
     val userId = int("user_id").bindTo { it.userId }
-    val tagData = json<MutableList<PictureTagEntry>>("tag_data").bindTo { it.tagData }
+    val tagData = json<PictureTagEntry>("tag_data").bindTo { it.tagData }
 }
 
 object ModelInfos : Table<ModelInfo>("model_info") {
