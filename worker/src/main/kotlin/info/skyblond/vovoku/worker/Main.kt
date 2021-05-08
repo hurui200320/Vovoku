@@ -35,7 +35,7 @@ fun main() {
             synchronized(isBusy) {
                 if (isBusy) return
                 // if not busy, try lock this task
-                val task = JacksonJsonUtil.jsonToObject(message!!, TrainingTaskDistro::class.java)
+                val task = JacksonJsonUtil.jsonToObject<TrainingTaskDistro>(message!!)
                 logger.info("Get task id: ${task.taskId}")
                 jedisLock = JedisLock(jedisPool.resource, "$RedisTaskLockKeyPrefix${task.taskId}", lockDuration)
                 if (!jedisLock!!.acquire()) {

@@ -29,7 +29,12 @@ enum class ModelTrainingStatus {
     /**
      * Training is finished without error.
      * */
-    FINISHED
+    FINISHED,
+
+    /**
+     * Training terminated
+     * */
+    TERMINATED
 }
 
 

@@ -3,8 +3,6 @@ package info.skyblond.vovoku.backend.database
 import com.zaxxer.hikari.HikariDataSource
 import info.skyblond.vovoku.backend.config.ConfigUtil
 import me.liuwj.ktorm.database.Database
-import me.liuwj.ktorm.entity.add
-import me.liuwj.ktorm.entity.sequenceOf
 import me.liuwj.ktorm.logging.Slf4jLoggerAdapter
 import me.liuwj.ktorm.support.postgresql.PostgreSqlDialect
 import org.slf4j.LoggerFactory

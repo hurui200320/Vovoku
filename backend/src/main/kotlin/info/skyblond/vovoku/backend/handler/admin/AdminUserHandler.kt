@@ -4,7 +4,6 @@ import info.skyblond.vovoku.backend.database.DatabaseUtil
 import info.skyblond.vovoku.backend.database.User
 import info.skyblond.vovoku.backend.database.Users
 import info.skyblond.vovoku.commons.models.AdminUserRequest
-import info.skyblond.vovoku.commons.models.DatabaseUserPojo
 import info.skyblond.vovoku.commons.models.Page
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
