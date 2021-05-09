@@ -6,6 +6,6 @@ import org.nd4j.linalg.dataset.api.iterator.BaseDatasetIterator
 class CustomDataSetIterator(
     batchSize: Int,
     dataFetcher: CustomDataFetcher
-): BaseDatasetIterator(
+) : BaseDatasetIterator(
     batchSize, dataFetcher.numExamples, dataFetcher
 )

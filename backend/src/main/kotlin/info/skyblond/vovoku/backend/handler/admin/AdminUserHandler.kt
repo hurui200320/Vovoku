@@ -74,7 +74,7 @@ object AdminUserHandler : AdminCRUDHandler<AdminUserRequest>(AdminUserRequest::c
      * */
     override fun handleUpdate(ctx: Context, request: AdminUserRequest) {
         val query = query(request, false)
-        if(query.totalRecords != 1){
+        if (query.totalRecords != 1) {
             throw BadRequestResponse("Cannot update multiple entity at once")
         }
         val entity = query.first()

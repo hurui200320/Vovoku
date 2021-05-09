@@ -9,6 +9,7 @@ import java.security.spec.RSAPublicKeySpec
 internal class CryptoUtilTest {
     private val rsaPublicKeySpec: RSAPublicKeySpec
     private val rsaPrivateKeySpec: RSAPrivateKeySpec
+
     init {
         val keyPairGenerator = KeyPairGenerator.getInstance("RSA")
         keyPairGenerator.initialize(4096)
@@ -30,7 +31,7 @@ internal class CryptoUtilTest {
     }
 
     @Test
-    fun encryptAndDecrypt(){
+    fun encryptAndDecrypt() {
         val data = "This is the data to be encrypted"
         val crypto = CryptoUtil.encryptWithPublicKey(data, rsaPublicKeySpec)
 

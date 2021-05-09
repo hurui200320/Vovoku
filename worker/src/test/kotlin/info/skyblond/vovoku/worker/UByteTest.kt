@@ -7,7 +7,7 @@ import java.io.RandomAccessFile
 
 class UByteTest {
     @Test
-    fun convertMnistToByte(){
+    fun convertMnistToByte() {
         val baseFile = File("C:\\Users\\hurui\\.deeplearning4j\\data\\MNIST")
 //      train file
 //        val imageDataFile = RandomAccessFile(File(baseFile, "train-images-idx3-ubyte"), "r")

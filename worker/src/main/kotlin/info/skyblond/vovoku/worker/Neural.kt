@@ -1,6 +1,6 @@
 package info.skyblond.vovoku.worker
 
-import info.skyblond.vovoku.commons.ModelTrainingParameter
+import info.skyblond.vovoku.commons.models.ModelTrainingParameter
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.layers.DenseLayer

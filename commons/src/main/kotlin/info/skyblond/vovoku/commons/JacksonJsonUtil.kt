@@ -16,7 +16,7 @@ object JacksonJsonUtil {
         it.registerKotlinModule()
     }
 
-    inline fun <reified T> jsonToObject(json: String): T{
+    inline fun <reified T> jsonToObject(json: String): T {
         return jsonMapper.readValue(json, T::class.java)
     }
 
@@ -28,7 +28,7 @@ object JacksonJsonUtil {
         file.writeText(objectToJson(obj), StandardCharsets.UTF_8)
     }
 
-    inline fun <reified T> readFromFile(file: File): T{
+    inline fun <reified T> readFromFile(file: File): T {
         return jsonToObject(file.readText(StandardCharsets.UTF_8))
     }
 

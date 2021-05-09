@@ -24,8 +24,9 @@ class Crypto {
     }
 
     @Test
-    fun decrypt(){
-        val crypto = "RYp5Kc_3dPuh3m0HT421hV8ttV2_dlzD3_y3Lhl48JEtSALiYHVJmfDi3-pQKMKXq28SVoaUIlXer59SleEn6KZtUy-ErFXdURP_tszuVHIEiLa8jdoI7VRYdKFrMazPu10PJ6NMvH_CJ1aKoydnXLdv0niPJeQa_6VVYWn5KxrhO8-rjdEnWUOYbptiK6JMzq9hb9lJlGutNbUSqFU7OitsRPVTrPr00Qng9qq9gSEAxEVDbLzd225UaIv3ZHH_eRbFDtKfRPadEkW2qPnvhdx11wki1dxhOnx2TkivruZrF0nYWVmZaJiHDEAIGVp6CmFGXxxiN2Hqv2T2hXWhprxjTZjlnYGljG3qT94FCm8mPG-lYeOqFkc2UG9FhNsr7lOtBoMxio_NRnhMHhgdSZXrHI8OfIeMHRX9vYxCQJksMz5HrIm586kd5gweMx9nDIpi5_rYdVh1iuYpImWWHkwkytIUlYqFykvxAVkOaXGlUnLlH5vf3fnMvlq6nd0qtH9-oHDkjfWgLCUPymsNv_AhYB5OBM4j0ov9IkO9u5tecyRzVUs--JknlHnNQJFgEVt-YYkWALTRXu2V5kMi4Ulj-C-rsITYcTe0FXqEEF6pVM4jQGB2-B_G_MJ1EVV7D6RqMDl37eeXM5a5r-hS54S0u0v24UsZRRmMy4VBpf0="
+    fun decrypt() {
+        val crypto =
+            "RYp5Kc_3dPuh3m0HT421hV8ttV2_dlzD3_y3Lhl48JEtSALiYHVJmfDi3-pQKMKXq28SVoaUIlXer59SleEn6KZtUy-ErFXdURP_tszuVHIEiLa8jdoI7VRYdKFrMazPu10PJ6NMvH_CJ1aKoydnXLdv0niPJeQa_6VVYWn5KxrhO8-rjdEnWUOYbptiK6JMzq9hb9lJlGutNbUSqFU7OitsRPVTrPr00Qng9qq9gSEAxEVDbLzd225UaIv3ZHH_eRbFDtKfRPadEkW2qPnvhdx11wki1dxhOnx2TkivruZrF0nYWVmZaJiHDEAIGVp6CmFGXxxiN2Hqv2T2hXWhprxjTZjlnYGljG3qT94FCm8mPG-lYeOqFkc2UG9FhNsr7lOtBoMxio_NRnhMHhgdSZXrHI8OfIeMHRX9vYxCQJksMz5HrIm586kd5gweMx9nDIpi5_rYdVh1iuYpImWWHkwkytIUlYqFykvxAVkOaXGlUnLlH5vf3fnMvlq6nd0qtH9-oHDkjfWgLCUPymsNv_AhYB5OBM4j0ov9IkO9u5tecyRzVUs--JknlHnNQJFgEVt-YYkWALTRXu2V5kMi4Ulj-C-rsITYcTe0FXqEEF6pVM4jQGB2-B_G_MJ1EVV7D6RqMDl37eeXM5a5r-hS54S0u0v24UsZRRmMy4VBpf0="
         val privateKey = JacksonJsonUtil.readFromFile<CryptoUtil.RSAKeySpec>(privateKeyFile)
             .restore<RSAPrivateKeySpec>()
         val data = CryptoUtil.decryptWithPrivateKey(crypto, privateKey)

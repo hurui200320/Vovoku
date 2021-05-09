@@ -13,7 +13,7 @@ data class ModelTrainingParameter(
     val updateParameters: List<Double>,
     val l2: Double,
     val seed: Long
-){
+) {
     enum class Updater {
         /**
          * Parameter:
@@ -23,6 +23,7 @@ data class ModelTrainingParameter(
          *  epsilon = 1e-8
          * */
         Adam,
+
         /**
          * Parameter:
          *  learningRate = 0.1,

@@ -30,7 +30,4 @@ object DatabaseUtil : AutoCloseable {
     override fun close() {
         hikariDataSource.close()
     }
-
-
-
 }

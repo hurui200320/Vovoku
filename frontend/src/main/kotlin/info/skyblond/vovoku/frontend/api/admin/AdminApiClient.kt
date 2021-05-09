@@ -12,11 +12,11 @@ import java.security.spec.RSAPrivateKeySpec
 
 class AdminApiClient(
     private val httpClient: OkHttpClient,
-    _urlPrefix: String,
+    _host: String,
     private val privateKey: RSAPrivateKeySpec
 ) {
     private val logger = LoggerFactory.getLogger(AdminUserRequest::class.java)
-    private val urlPrefix: String = _urlPrefix.removeSuffix("/")
+    private val urlPrefix: String = _host.removeSuffix("/") + "/admin"
 
     private val usersEndPoint = "users"
     private val picturesEndPoint = "pictures"
@@ -58,9 +58,9 @@ class AdminApiClient(
     /**
      * Send request and expect to be HTTP 200
      * */
-    private fun doRequest(body: Any, endPoint: String): Boolean{
+    private fun doRequest(body: Any, endPoint: String): Boolean {
         val json = JacksonJsonUtil.objectToJson(body)
-        val response = postJson("$urlPrefix/$String", json)
+        val response = postJson("$urlPrefix/$endPoint", json)
         if (response.first != 200) {
             logger.error("Server response '${response.first}': ${response.second}")
         }

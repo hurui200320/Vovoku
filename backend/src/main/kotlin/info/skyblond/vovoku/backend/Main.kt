@@ -23,6 +23,7 @@ fun main() {
     val logger = LoggerFactory.getLogger("Application")
 
     val apiConfig = ConfigUtil.config.api
+    val pubKey = apiConfig.publicKeySpec.restore<RSAPublicKeySpec>()
 
     JavalinJackson.configure(JacksonJsonUtil.jsonMapper)
     val app = Javalin.create { config ->
@@ -31,22 +32,20 @@ fun main() {
 
 
     app.before("/user/*") { ctx ->
-        val token = ctx.header(Header.AUTHORIZATION) ?: throw UnauthorizedResponse()
-        val userId = RedisUtil.queryToken(token) ?: throw UnauthorizedResponse()
+        val token = ctx.header(Header.AUTHORIZATION) ?: throw UnauthorizedResponse("Token required")
+        val userId = RedisUtil.queryToken(token) ?: throw UnauthorizedResponse("Invalidate token")
         ctx.attribute(UserPublicApiHandler.USER_ID_ATTR_NAME, userId)
     }
 
-    val pubKey = apiConfig.publicKeySpec.restore<RSAPublicKeySpec>()
     app.before("/admin/*") { ctx ->
-        val signHeader = ctx.header(Header.AUTHORIZATION) ?: throw UnauthorizedResponse()
+        val signHeader = ctx.header(Header.AUTHORIZATION) ?: throw UnauthorizedResponse("Signature required")
         if (!CryptoUtil.verifyWithPublicKey(ctx.body(), signHeader, pubKey))
-            throw UnauthorizedResponse()
+            throw UnauthorizedResponse("Invalidate signature")
     }
 
     app.after("/admin/*") { ctx ->
         if (ctx.attribute<Boolean>(AdminCRUDHandler.ENCRYPTION_IDENTIFIER_KEY) == true) {
             val result = ctx.resultString() ?: return@after
-            logger.info("Processing result string: $result")
             ctx.result(CryptoUtil.encryptWithPublicKey(result, pubKey))
         }
     }
@@ -62,16 +61,40 @@ fun main() {
         }
         path("user") {
             // 用户接口更注重每个接口实现一个功能
-            path("account"){
-                path("whoami"){
+            path("account") {
+                path("whoami") {
                     get(UserAccountHandler.whoAmIHandler)
                 }
-                path("delete"){
+                path("delete") {
                     delete(UserAccountHandler.deleteHandler)
                 }
             }
-            path("picture"){
+            path("picture") {
+                path(":picTagId") {
+                    put { ctx ->
+                        // update
+                    }
+                    delete { ctx ->
+                        // delete
+                    }
+                    get { ctx ->
+                        // query one
+                    }
+                }
+                post { ctx ->
+                    // upload
+                }
+                get { ctx ->
+                    // query
+                }
+            }
+            path("model") {
 
+
+            }
+            path("file") {
+                // 接口需要将 file:// 的路径转换为http可达的路径
+                // 该接口提供对应数据的交互功能：仅下载
 
             }
 

@@ -25,6 +25,8 @@ dependencies {
     implementation "com.squareup.okhttp3:okhttp:4.9.0"
     // commons
     implementation project(":commons")
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.+'
+
 }
 
 compileKotlin {

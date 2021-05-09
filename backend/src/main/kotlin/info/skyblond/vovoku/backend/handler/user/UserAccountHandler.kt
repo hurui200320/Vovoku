@@ -10,9 +10,7 @@ import io.javalin.http.UnauthorizedResponse
 import me.liuwj.ktorm.dsl.eq
 import me.liuwj.ktorm.entity.find
 import me.liuwj.ktorm.entity.sequenceOf
-import org.eclipse.jetty.websocket.api.StatusCode
 import org.slf4j.LoggerFactory
-import java.util.*
 
 object UserAccountHandler {
     private val logger = LoggerFactory.getLogger(UserAccountHandler::class.java)
