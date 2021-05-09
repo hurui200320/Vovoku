@@ -44,7 +44,7 @@ public class JedisLock implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        this.jedis.quit();
+        this.jedis.close();
     }
 
     /**

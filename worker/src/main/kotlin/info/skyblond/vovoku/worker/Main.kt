@@ -1,6 +1,8 @@
 package info.skyblond.vovoku.worker
 
 import info.skyblond.vovoku.commons.*
+import info.skyblond.vovoku.commons.models.TrainingTaskDistro
+import info.skyblond.vovoku.commons.models.TrainingTaskReport
 import info.skyblond.vovoku.commons.redis.JedisLock
 import info.skyblond.vovoku.worker.datavec.CustomDataFetcher
 import info.skyblond.vovoku.worker.datavec.CustomDataSetIterator
@@ -68,9 +70,9 @@ fun main() {
     }
 
     Thread {
-        val jedis = jedisPool.resource
-        jedis.subscribe(jedisSub, RedisTaskDistributionChannel)
-        jedis.quit()
+        jedisPool.resource.use {
+            it.subscribe(jedisSub, RedisTaskDistributionChannel)
+        }
     }.also {
         it.isDaemon = true
         it.start()
@@ -91,87 +93,87 @@ fun main() {
             Thread.sleep(5 * 1000)
         }
 
-        val jedis = jedisPool.resource
+        jedisPool.resource.use { jedis ->
+            try {
+                logger.info("Start training task: ${currentTask!!.taskId}")
 
-        try {
-            logger.info("Start training task: ${currentTask!!.taskId}")
+                // parse file path
+                val trainingParameter = currentTask!!.parameter
+                val trainFetcher = CustomDataFetcher(
+                    FilePathUtil.readFromFilePath(currentTask!!.trainingDataBytePath, currentTask!!.dataAccessToken)
+                        .readBytes(),
+                    FilePathUtil.readFromFilePath(currentTask!!.trainingLabelBytePath, currentTask!!.dataAccessToken)
+                        .readBytes(),
+                    currentTask!!.trainingSamplesCount, trainingParameter.seed
+                )
+                val customTrain: DataSetIterator = CustomDataSetIterator(trainingParameter.batchSize, trainFetcher)
+                val testFetcher = CustomDataFetcher(
+                    FilePathUtil.readFromFilePath(currentTask!!.testDataBytePath, currentTask!!.dataAccessToken)
+                        .readBytes(),
+                    FilePathUtil.readFromFilePath(currentTask!!.testLabelBytePath, currentTask!!.dataAccessToken)
+                        .readBytes(),
+                    currentTask!!.testSamplesCount, trainingParameter.seed
+                )
+                val customTest: DataSetIterator = CustomDataSetIterator(trainingParameter.batchSize, testFetcher)
 
-            // parse file path
-            val trainingParameter = currentTask!!.parameter
-            val trainFetcher = CustomDataFetcher(
-                FilePathUtil.readFromFilePath(currentTask!!.trainingDataBytePath, currentTask!!.dataAccessToken)
-                    .readBytes(),
-                FilePathUtil.readFromFilePath(currentTask!!.trainingLabelBytePath, currentTask!!.dataAccessToken)
-                    .readBytes(),
-                currentTask!!.trainingSamplesCount, trainingParameter.seed
-            )
-            val customTrain: DataSetIterator = CustomDataSetIterator(trainingParameter.batchSize, trainFetcher)
-            val testFetcher = CustomDataFetcher(
-                FilePathUtil.readFromFilePath(currentTask!!.testDataBytePath, currentTask!!.dataAccessToken)
-                    .readBytes(),
-                FilePathUtil.readFromFilePath(currentTask!!.testLabelBytePath, currentTask!!.dataAccessToken)
-                    .readBytes(),
-                currentTask!!.testSamplesCount, trainingParameter.seed
-            )
-            val customTest: DataSetIterator = CustomDataSetIterator(trainingParameter.batchSize, testFetcher)
+                val updater = parseUpdater(trainingParameter.updater, trainingParameter.updateParameters)
 
-            val updater = parseUpdater(trainingParameter.updater, trainingParameter.updateParameters)
+                val conf = getNeuralNetworkConfig(
+                    trainingParameter.seed, updater,
+                    trainingParameter.l2,
+                    trainingParameter.hiddenLayerSize,
+                    trainingParameter.inputWidth * trainingParameter.inputHeight,
+                    trainingParameter.outputSize
+                )
 
-            val conf = getNeuralNetworkConfig(
-                trainingParameter.seed, updater,
-                trainingParameter.l2,
-                trainingParameter.hiddenLayerSize,
-                trainingParameter.inputWidth * trainingParameter.inputHeight,
-                trainingParameter.outputSize
-            )
+                val model = MultiLayerNetwork(conf)
+                // TODO read out model and continue training
+                model.init()
+                model.fit(customTrain, trainingParameter.epochs)
+                val eval = model.evaluate<Evaluation>(customTest)
+                val roc = model.evaluateROCMultiClass<ROCMultiClass>(customTest, 0)
 
-            val model = MultiLayerNetwork(conf)
-            // TODO read out model and continue training
-            model.init()
-            model.fit(customTrain, trainingParameter.epochs)
-            val eval = model.evaluate<Evaluation>(customTest)
-            val roc = model.evaluateROCMultiClass<ROCMultiClass>(customTest, 0)
+                val rocValue = roc.calculateAUC(0)
 
-            val rocValue = roc.calculateAUC(0)
+                val report = TrainingTaskReport(
+                    currentTask!!.taskId,
+                    true,
+                    "OK",
+                    eval.stats(),
+                    eval.accuracy(),
+                    eval.precision(),
+                    eval.recall(),
+                    roc.stats(),
+                    rocValue
+                )
 
-            val report = TrainingTaskReport(
-                currentTask!!.taskId,
-                true,
-                "OK",
-                eval.stats(),
-                eval.accuracy(),
-                eval.precision(),
-                eval.recall(),
-                roc.stats(),
-                rocValue
-            )
+                val temp = File.createTempFile("task_", currentTask!!.taskId.toString())
+                model.save(temp, true)
+                val output = FilePathUtil.writeToFilePath(currentTask!!.modelSavePath, currentTask!!.modelAccessToken)
+                output.write(temp.readBytes())
+                output.close()
+                temp.delete()
 
-            val temp = File.createTempFile("task_", currentTask!!.taskId.toString())
-            model.save(temp, true)
-            val output = FilePathUtil.writeToFilePath(currentTask!!.modelSavePath, currentTask!!.modelAccessToken)
-            output.write(temp.readBytes())
-            output.close()
-            temp.delete()
-
-            jedis.publish(
-                RedisTaskReportChannel, JacksonJsonUtil.objectToJson(report)
-            )
-            logger.info("Finished task: ${currentTask!!.taskId}")
-        } catch (e: Exception) {
-            logger.error("Error when training task: ${currentTask!!.taskId}", e)
-            jedis.publish(
-                RedisTaskReportChannel, JacksonJsonUtil.objectToJson(
-                    TrainingTaskReport(
-                        currentTask!!.taskId,
-                        false,
-                        e.localizedMessage
+                jedis.publish(
+                    RedisTaskReportChannel, JacksonJsonUtil.objectToJson(report)
+                )
+                logger.info("Finished task: ${currentTask!!.taskId}")
+            } catch (e: Exception) {
+                logger.error("Error when training task: ${currentTask!!.taskId}", e)
+                jedis.publish(
+                    RedisTaskReportChannel, JacksonJsonUtil.objectToJson(
+                        TrainingTaskReport(
+                            currentTask!!.taskId,
+                            false,
+                            e.localizedMessage
+                        )
                     )
                 )
-            )
-        } finally {
-            jedisLock!!.release()
-            currentTask = null
-            isBusy = false
+            } finally {
+                jedisLock!!.release()
+                currentTask = null
+                isBusy = false
+            }
         }
     }
 }

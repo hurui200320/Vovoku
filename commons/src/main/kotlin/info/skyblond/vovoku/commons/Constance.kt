@@ -17,11 +17,6 @@ const val RedisTaskReportChannel = "taskReport"
 const val RedisTaskLockKeyPrefix = "task."
 
 /**
- * Redis key prefix for backend temporarily storing infer task info.
- * */
-const val RedisInferKeyPrefix = "infer."
-
-/**
  * Redis key prefix for backend storing token info.
  * Token -> UserId
  * */

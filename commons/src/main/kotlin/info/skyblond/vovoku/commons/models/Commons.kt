@@ -1,7 +1,6 @@
 package info.skyblond.vovoku.commons.models
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import info.skyblond.vovoku.commons.ModelTrainingParameter
 import java.sql.Timestamp
 
 

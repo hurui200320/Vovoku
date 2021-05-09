@@ -1,4 +1,4 @@
-package info.skyblond.vovoku.commons
+package info.skyblond.vovoku.commons.models
 
 // TODO
 
