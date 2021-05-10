@@ -5,10 +5,7 @@ import info.skyblond.vovoku.backend.handler.admin.AdminCRUDHandler
 import info.skyblond.vovoku.backend.handler.admin.AdminModelHandler
 import info.skyblond.vovoku.backend.handler.admin.AdminPictureHandler
 import info.skyblond.vovoku.backend.handler.admin.AdminUserHandler
-import info.skyblond.vovoku.backend.handler.user.UserAccountHandler
-import info.skyblond.vovoku.backend.handler.user.UserFileHandler
-import info.skyblond.vovoku.backend.handler.user.UserPictureHandler
-import info.skyblond.vovoku.backend.handler.user.UserPublicApiHandler
+import info.skyblond.vovoku.backend.handler.user.*
 import info.skyblond.vovoku.backend.redis.RedisUtil
 import info.skyblond.vovoku.commons.CryptoUtil
 import info.skyblond.vovoku.commons.JacksonJsonUtil
@@ -31,7 +28,6 @@ fun main() {
     val app = Javalin.create { config ->
         config.enableCorsForAllOrigins()
     }.start(apiConfig.host, apiConfig.port)
-
 
     app.before("/user/*") { ctx ->
         val token = ctx.header(Header.AUTHORIZATION) ?: throw UnauthorizedResponse("Token required")
@@ -86,8 +82,25 @@ fun main() {
                 get(UserPictureHandler.listPicHandler)
             }
             path("model") {
+                path(":modelId") {
+                    // delete model
+                    delete(UserModelHandler.deleteModelHandler)
+                    // query one model by id
+                    get(UserModelHandler.getOneModelHandler)
+                }
+                // request training new model
+                post(UserModelHandler.requestNewModelHandler)
+                // list user models
+                get(UserModelHandler.listModelHandler)
 
-
+            }
+            path("prototype") {
+                path(":typeId") {
+                    // list current available model prototypes
+                    get(UserModelHandler.getOnePrototypeHandler)
+                }
+                // list current available model prototypes
+                get(UserModelHandler.listPrototypeHandler)
             }
             path("file") {
                 // 接口需要将 file:// 的路径转换为http可达的路径

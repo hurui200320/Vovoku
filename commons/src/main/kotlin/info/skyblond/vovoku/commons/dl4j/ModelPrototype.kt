@@ -27,7 +27,7 @@ interface ModelPrototype {
     companion object {
         const val MNIST_MLP_NAME = "mnist_mlp"
 
-        private val nameToPrototype: Map<String, ModelPrototype> = mapOf(
+        val nameToPrototype: Map<String, ModelPrototype> = mapOf(
             MNIST_MLP_NAME to MnistMLPModelPrototype()
         )
 

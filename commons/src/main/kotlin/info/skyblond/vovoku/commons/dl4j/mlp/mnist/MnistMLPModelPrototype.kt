@@ -42,11 +42,16 @@ class MnistMLPModelPrototype : ModelPrototype {
     override val descriptor: PrototypeDescriptor = PrototypeDescriptor(
         prototypeIdentifier = ModelPrototype.MNIST_MLP_NAME,
         inputSizeDim = 2,
-        inputSizeConstrain = intArrayOf(0, 0),
+        inputSizeDescription = arrayOf(
+            "width of input pic, default: 28",
+            "height of input pic, default: 28"
+        ),
         labelSizeDim = 1,
-        labelSizeConstrain = intArrayOf(0),
+        labelSizeDescription = arrayOf(
+            "total number of label, default: 10"
+        ),
         updaters = arrayOf(Updater.Adam, Updater.Nesterovs),
-        networkParameterDescription = listOf(
+        networkParameterDescription = arrayOf(
             "L2, default: 1e-4",
             "hidden layer size, non-negative integer, default: 1000"
         ),

@@ -1,6 +1,8 @@
 package info.skyblond.vovoku.commons.models
 
+import com.fasterxml.jackson.annotation.JsonClassDescription
 import com.fasterxml.jackson.annotation.JsonFormat
+import info.skyblond.vovoku.commons.dl4j.PrototypeDescriptor
 import java.sql.Timestamp
 
 
@@ -54,7 +56,9 @@ data class PictureTagEntry(
 data class ModelCreateInfo(
     @JsonFormat(shape = JsonFormat.Shape.NUMBER, pattern = "s")
     val createTime: Timestamp,
-    val trainingParameter: ModelTrainingParameter
+    val trainingParameter: ModelTrainingParameter,
+    // save this in case model update
+    val prototypeDescriptionSnapshot: PrototypeDescriptor
 )
 
 data class ModelTrainingInfo(

@@ -2,7 +2,6 @@ package info.skyblond.vovoku.commons.models
 
 import info.skyblond.vovoku.commons.dl4j.Updater
 
-// TODO
 
 data class ModelTrainingParameter(
     val modelIdentifier: String,
