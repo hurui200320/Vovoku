@@ -42,9 +42,7 @@ data class TrainingTaskDistro(
     val testDataBytePath: String,
     val testLabelBytePath: String,
     val testSamplesCount: Int,
-    val dataAccessToken: String,
-    val modelSavePath: String,
-    val modelAccessToken: String
+    val modelSavePath: String
 )
 
 data class TrainingTaskReport(

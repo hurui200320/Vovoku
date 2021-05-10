@@ -7,7 +7,10 @@ import info.skyblond.vovoku.commons.models.Page
 import info.skyblond.vovoku.frontend.api.admin.AdminApiClient
 import info.skyblond.vovoku.frontend.api.user.UserApiClient
 import okhttp3.OkHttpClient
+import java.awt.image.BufferedImage
 import java.io.File
+import javax.imageio.ImageIO
+
 
 fun main() {
     val httpClient = OkHttpClient()
@@ -21,5 +24,13 @@ fun main() {
     println(userApiClient.login("hurui", "passw0rd"))
     println(userApiClient.accountApiClient.whoAmI())
 
-
+    println(userApiClient.pictureApiClient.listPic(1, 20).third.toList())
+    // upload one pic
+    val image = ImageIO.read(File("C:\\Users\\hurui\\Desktop\\imag0173.jpg"))
+    println(userApiClient.pictureApiClient.uploadPic(image, 1))
+    println(userApiClient.pictureApiClient.listPic(1, 20).third.toList())
+    val fetched = userApiClient.pictureApiClient.fetchPic(
+        userApiClient.pictureApiClient.listPic(1, 20).third.first().filePath!!
+    )
+    ImageIO.write(fetched.third, "png", File("output.png"))
 }

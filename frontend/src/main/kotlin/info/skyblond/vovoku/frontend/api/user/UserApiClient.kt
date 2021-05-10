@@ -19,7 +19,7 @@ class UserApiClient(
     private val picturePath = "user/picture"
     private val modelPath = "user/model"
 
-    private var token: String = ""
+    internal var token: String = ""
 
     // sub api clients
     val accountApiClient = UserAccountApiClient(this, httpClient, "$urlPrefix/$accountPath")
@@ -73,7 +73,7 @@ class UserApiClient(
             }
     }
 
-    internal fun doDelete(url: String, body: RequestBody): Pair<Int, String> {
+    internal fun doDelete(url: String, body: RequestBody? = null): Pair<Int, String> {
         val request = Request.Builder()
             .url(url)
             .delete(body)

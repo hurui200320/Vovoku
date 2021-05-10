@@ -1,6 +1,8 @@
 package info.skyblond.vovoku.backend.database
 
+import info.skyblond.vovoku.backend.handler.user.UserFileHandler
 import info.skyblond.vovoku.commons.models.*
+import io.javalin.http.Context
 import org.ktorm.entity.Entity
 
 interface User : Entity<User> {
@@ -27,6 +29,11 @@ interface PictureTag : Entity<PictureTag> {
     var userId: Int
     var tagData: PictureTagEntry
 
+    fun toPojo(ctx: Context): DatabasePictureTagPojo = DatabasePictureTagPojo(
+        tagId, ctx.url().removeSuffix(ctx.path()) + UserFileHandler.HANDLER_PATH + tagId, userId, tagData
+    )
+
+    // TODO Admin api?
     fun toPojo(): DatabasePictureTagPojo = DatabasePictureTagPojo(
         tagId, filePath, userId, tagData
     )

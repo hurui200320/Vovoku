@@ -4,6 +4,7 @@ import info.skyblond.vovoku.backend.database.DatabaseUtil
 import info.skyblond.vovoku.backend.database.PictureTags
 import info.skyblond.vovoku.commons.CryptoUtil
 import info.skyblond.vovoku.commons.FilePathUtil
+import io.javalin.core.util.Header
 import io.javalin.http.Handler
 import io.javalin.http.InternalServerErrorResponse
 import io.javalin.http.NotFoundResponse
@@ -30,7 +31,9 @@ object UserFileHandler {
 
         val entity = database.sequenceOf(PictureTags)
             .find { (it.userId eq userId) and (it.tagId eq tagId) } ?: throw NotFoundResponse("Pic not found")
-
+        ctx.header("pic_width", entity.tagData.width.toString())
+        ctx.header("pic_height", entity.tagData.height.toString())
+        ctx.header("pic_channel", entity.tagData.channelCount.toString())
         ctx.contentType("application/octet-stream")
         ctx.result(FilePathUtil.readFromFilePath(entity.filePath))
     }
