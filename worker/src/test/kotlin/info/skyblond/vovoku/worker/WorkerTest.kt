@@ -1,7 +1,10 @@
 package info.skyblond.vovoku.worker
 
-import info.skyblond.vovoku.commons.*
+import info.skyblond.vovoku.commons.JacksonJsonUtil
+import info.skyblond.vovoku.commons.RedisTaskDistributionChannel
+import info.skyblond.vovoku.commons.RedisTaskReportChannel
 import info.skyblond.vovoku.commons.models.ModelTrainingParameter
+import info.skyblond.vovoku.commons.models.TrainingTaskDistro
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
 import redis.clients.jedis.Jedis

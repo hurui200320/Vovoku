@@ -1,7 +1,7 @@
 package info.skyblond.vovoku.backend.database
 
 import info.skyblond.vovoku.commons.models.*
-import me.liuwj.ktorm.entity.Entity
+import org.ktorm.entity.Entity
 
 interface User : Entity<User> {
     companion object : Entity.Factory<User>()
@@ -23,8 +23,8 @@ interface PictureTag : Entity<PictureTag> {
     companion object : Entity.Factory<PictureTag>()
 
     val tagId: Int
-    val filePath: String
-    val userId: Int
+    var filePath: String
+    var userId: Int
     var tagData: PictureTagEntry
 
     fun toPojo(): DatabasePictureTagPojo = DatabasePictureTagPojo(
@@ -34,8 +34,8 @@ interface PictureTag : Entity<PictureTag> {
     fun update(pojo: DatabasePictureTagPojo) {
         require(tagId == pojo.tagId) { "Different tag id" }
         pojo.tagData?.let {
-            // only update tag number
-            val newPojo = PictureTagEntry(tagData.width, tagData.height, tagData.channelCount, it.tag)
+            // full update, admin take charge of data correctness
+            val newPojo = PictureTagEntry(it.width, it.height, it.channelCount, it.tag)
             tagData = newPojo
         }
         flushChanges()

@@ -5,9 +5,9 @@ import info.skyblond.vovoku.backend.database.Users
 import info.skyblond.vovoku.backend.redis.RedisUtil
 import io.javalin.http.Handler
 import io.javalin.http.UnauthorizedResponse
-import me.liuwj.ktorm.dsl.eq
-import me.liuwj.ktorm.entity.find
-import me.liuwj.ktorm.entity.sequenceOf
+import org.ktorm.dsl.eq
+import org.ktorm.entity.find
+import org.ktorm.entity.sequenceOf
 import org.slf4j.LoggerFactory
 import java.util.*
 

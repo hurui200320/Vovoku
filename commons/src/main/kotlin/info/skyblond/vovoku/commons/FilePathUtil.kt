@@ -2,20 +2,23 @@ package info.skyblond.vovoku.commons
 
 import org.slf4j.LoggerFactory
 import java.io.*
+import java.util.*
 
 object FilePathUtil {
     private val logger = LoggerFactory.getLogger(FilePathUtil::class.java)
 
     fun readFromFilePath(path: String, token: String): InputStream {
-        when {
-            checkPrefix(path, "file://") -> return FileInputStream(File(path.removePrefix("file://")))
+        return when {
+            checkPrefix(path, "file://") -> FileInputStream(File(path.removePrefix("file://")))
+            checkPrefix(path, "base64://") -> ByteArrayInputStream(Base64.getDecoder().decode(path.removePrefix("base64://")))
             else -> throw IllegalArgumentException("Unknown file path: '$path'")
         }
     }
 
-    fun writeToFilePath(path: String, token: String): OutputStream {
+    fun writeToFilePath(path: String, token: String = ""): OutputStream {
         when {
             checkPrefix(path, "file://") -> return FileOutputStream(File(path.removePrefix("file://")))
+            checkPrefix(path, "base64://") -> throw IllegalAccessException("Cannot write into static base64 datasource")
             else -> throw IllegalArgumentException("Unknown file path: '$path'")
         }
     }

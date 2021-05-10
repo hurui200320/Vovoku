@@ -8,8 +8,8 @@ import info.skyblond.vovoku.commons.models.ModelTrainingStatus
 import info.skyblond.vovoku.commons.models.Page
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
-import me.liuwj.ktorm.dsl.eq
-import me.liuwj.ktorm.entity.*
+import org.ktorm.dsl.eq
+import org.ktorm.entity.*
 import org.slf4j.LoggerFactory
 import java.sql.Timestamp
 

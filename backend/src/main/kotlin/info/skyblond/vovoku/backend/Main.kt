@@ -6,6 +6,7 @@ import info.skyblond.vovoku.backend.handler.admin.AdminModelHandler
 import info.skyblond.vovoku.backend.handler.admin.AdminPictureHandler
 import info.skyblond.vovoku.backend.handler.admin.AdminUserHandler
 import info.skyblond.vovoku.backend.handler.user.UserAccountHandler
+import info.skyblond.vovoku.backend.handler.user.UserPictureHandler
 import info.skyblond.vovoku.backend.handler.user.UserPublicApiHandler
 import info.skyblond.vovoku.backend.redis.RedisUtil
 import info.skyblond.vovoku.commons.CryptoUtil
@@ -16,6 +17,7 @@ import io.javalin.core.util.Header
 import io.javalin.http.UnauthorizedResponse
 import io.javalin.plugin.json.JavalinJackson
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.security.spec.RSAPublicKeySpec
 
 
@@ -71,22 +73,17 @@ fun main() {
             }
             path("picture") {
                 path(":picTagId") {
-                    put { ctx ->
-                        // update
-                    }
-                    delete { ctx ->
-                        // delete
-                    }
-                    get { ctx ->
-                        // query one
-                    }
+                    // update tag number
+                    put(UserPictureHandler.updateTagNumberHandler)
+                    // delete pic
+                    delete(UserPictureHandler.deletePicHandler)
+                    // query one pic by id
+                    get(UserPictureHandler.getOnePicHandler)
                 }
-                post { ctx ->
-                    // upload
-                }
-                get { ctx ->
-                    // query
-                }
+                // upload new pic
+                post(UserPictureHandler.uploadNewPicHandler)
+                // list user pic
+                get(UserPictureHandler.listPicHandler)
             }
             path("model") {
 

@@ -7,9 +7,9 @@ import info.skyblond.vovoku.commons.models.AdminUserRequest
 import info.skyblond.vovoku.commons.models.Page
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
-import me.liuwj.ktorm.dsl.eq
-import me.liuwj.ktorm.dsl.like
-import me.liuwj.ktorm.entity.*
+import org.ktorm.dsl.eq
+import org.ktorm.dsl.like
+import org.ktorm.entity.*
 import org.slf4j.LoggerFactory
 
 object AdminUserHandler : AdminCRUDHandler<AdminUserRequest>(AdminUserRequest::class.java) {
