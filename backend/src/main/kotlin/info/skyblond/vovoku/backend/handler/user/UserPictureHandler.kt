@@ -5,10 +5,12 @@ import info.skyblond.vovoku.backend.database.DatabaseUtil
 import info.skyblond.vovoku.backend.database.PictureTag
 import info.skyblond.vovoku.backend.database.PictureTags
 import info.skyblond.vovoku.commons.FilePathUtil
-import info.skyblond.vovoku.commons.models.DatabasePictureTagPojo
 import info.skyblond.vovoku.commons.models.Page
 import info.skyblond.vovoku.commons.models.PictureTagEntry
-import io.javalin.http.*
+import io.javalin.http.BadRequestResponse
+import io.javalin.http.Handler
+import io.javalin.http.InternalServerErrorResponse
+import io.javalin.http.NotFoundResponse
 import org.ktorm.dsl.and
 import org.ktorm.dsl.eq
 import org.ktorm.entity.*
@@ -19,12 +21,6 @@ import java.util.*
 object UserPictureHandler {
     private val logger = LoggerFactory.getLogger(UserPictureHandler::class.java)
     private val database = DatabaseUtil.database
-
-    private fun picEntityToPojo(ctx: Context, entity: PictureTag): DatabasePictureTagPojo{
-        return entity.let {
-            it.toPojo().copy(filePath = ctx.fullUrl().removeSuffix(ctx.path()) + UserFileHandler.HANDLER_PATH + it.tagId)
-        }
-    }
 
     val updateTagNumberHandler = Handler { ctx ->
         val userId = ctx.attribute<Int>(UserPublicApiHandler.USER_ID_ATTR_NAME)
@@ -39,7 +35,7 @@ object UserPictureHandler {
         entity.tagData = entity.tagData.copy(tag = newTag)
         entity.flushChanges()
 
-        ctx.json(picEntityToPojo(ctx, entity))
+        ctx.json(entity.toPojo(ctx))
     }
 
     val deletePicHandler = Handler { ctx ->
@@ -61,12 +57,11 @@ object UserPictureHandler {
             ?: throw InternalServerErrorResponse("Cannot parse token for user id")
         val tagId = ctx.pathParam<Int>("picTagId").get()
 
-        ctx.json(database.sequenceOf(PictureTags)
-            .find { (it.userId eq userId) and (it.tagId eq tagId) }
-            .let { it ?: throw  NotFoundResponse("Pic not found") }
-            .let {
-                picEntityToPojo(ctx, it)
-            }
+        ctx.json(
+            database.sequenceOf(PictureTags)
+                .find { (it.userId eq userId) and (it.tagId eq tagId) }
+                .let { it ?: throw  NotFoundResponse("Pic not found") }
+                .toPojo(ctx)
         )
     }
 
@@ -78,8 +73,11 @@ object UserPictureHandler {
         val height = ctx.formParam<Int>("height").check({ it > 0 }).get()
         val channelCount = ctx.formParam<Int>("channel").check({ it > 0 }).get()
         val tag = ctx.formParam<Int>("tag").check({ it in 0..9 }).get()
-
-        val file = ctx.uploadedFile("data") ?: throw BadRequestResponse("Upload data is required")
+        val file = try {
+            ctx.uploadedFile("data") ?: throw BadRequestResponse("Upload data is required")
+        } catch (e: Exception) {
+            throw BadRequestResponse("Error when handling uploaded file: ${e.localizedMessage}")
+        }
         val filePath = if (file.size > 16 * 1024L) {
             // if file bigger than 16K, store it into file
             val folder = File(ConfigUtil.uploadBaseDir, userId.toString())
@@ -101,14 +99,14 @@ object UserPictureHandler {
             "base64://" + Base64.getEncoder().encodeToString(file.content.readBytes())
         }
         val tagEntry = PictureTagEntry(width, height, channelCount, tag)
-        val entry = PictureTag {
+        val entity = PictureTag {
             this.filePath = filePath
             this.userId = userId
             this.tagData = tagEntry
         }
         database.sequenceOf(PictureTags)
-            .add(entry)
-        ctx.json(picEntityToPojo(ctx, entry))
+            .add(entity)
+        ctx.json(entity.toPojo(ctx))
     }
 
     val listPicHandler = Handler { ctx ->
@@ -116,8 +114,8 @@ object UserPictureHandler {
             ?: throw InternalServerErrorResponse("Cannot parse token for user id")
 
         val page = Page(
-            ctx.formParam<Int>("page").check({ it > 0 }).getOrNull(),
-            ctx.formParam<Int>("size").check({ it > 0 }).getOrNull()
+            ctx.queryParam<Int>("page").check({ it > 0 }).getOrNull(),
+            ctx.queryParam<Int>("size").check({ it > 0 }).getOrNull()
         )
 
         ctx.json(database.sequenceOf(PictureTags)
@@ -126,7 +124,7 @@ object UserPictureHandler {
             .drop(page.offset)
             .take(page.limit)
             .map {
-                picEntityToPojo(ctx, it)
+                it.toPojo(ctx)
             }
         )
     }

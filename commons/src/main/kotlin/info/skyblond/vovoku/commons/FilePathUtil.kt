@@ -10,7 +10,9 @@ object FilePathUtil {
     fun readFromFilePath(path: String): InputStream {
         return when {
             checkPrefix(path, "file://") -> FileInputStream(File(path.removePrefix("file://")))
-            checkPrefix(path, "base64://") -> ByteArrayInputStream(Base64.getDecoder().decode(path.removePrefix("base64://")))
+            checkPrefix(path, "base64://") -> ByteArrayInputStream(
+                Base64.getDecoder().decode(path.removePrefix("base64://"))
+            )
             else -> throw IllegalArgumentException("Unknown file path: '$path'")
         }
     }

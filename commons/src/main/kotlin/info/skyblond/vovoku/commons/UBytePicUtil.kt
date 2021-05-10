@@ -9,7 +9,6 @@ import java.awt.image.BufferedImage
 object UBytePicUtil {
     private val logger: Logger = LoggerFactory.getLogger(UBytePicUtil::class.java)
 
-    // TODO Test
     fun picToUByteArray(image: BufferedImage): Triple<Pair<Int, Int>, Int, ByteArray> {
         val raster = image.raster
         val sampleModel = raster.sampleModel
@@ -61,7 +60,6 @@ object UBytePicUtil {
         )
 
         val newImageRaster = bufferedImage.raster
-
 
         for (x in 0 until image.width) {
             for (y in 0 until image.height) {

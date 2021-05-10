@@ -2,20 +2,15 @@ package info.skyblond.vovoku.backend.handler.user
 
 import info.skyblond.vovoku.backend.database.DatabaseUtil
 import info.skyblond.vovoku.backend.database.PictureTags
-import info.skyblond.vovoku.commons.CryptoUtil
 import info.skyblond.vovoku.commons.FilePathUtil
-import io.javalin.core.util.Header
 import io.javalin.http.Handler
 import io.javalin.http.InternalServerErrorResponse
 import io.javalin.http.NotFoundResponse
-import io.javalin.plugin.openapi.annotations.ContentType
 import org.ktorm.dsl.and
 import org.ktorm.dsl.eq
 import org.ktorm.entity.find
 import org.ktorm.entity.sequenceOf
 import org.slf4j.LoggerFactory
-import java.util.*
-import javax.crypto.spec.SecretKeySpec
 
 object UserFileHandler {
     private val logger = LoggerFactory.getLogger(UserFileHandler::class.java)

@@ -17,7 +17,6 @@ object UserPublicApiHandler {
 
     const val USER_ID_ATTR_NAME = "USER_ID"
 
-    // TODO 要不要用Form Param重写Admin接口，恢复数据库对象的Nullability？
     val userTokenHandler = Handler { ctx ->
         val username = ctx.formParam<String>("username").get()
         val password = ctx.formParam<String>("password").get().toLowerCase()

@@ -4,7 +4,6 @@ import info.skyblond.vovoku.commons.JacksonJsonUtil
 import info.skyblond.vovoku.commons.UBytePicUtil
 import info.skyblond.vovoku.commons.models.DatabasePictureTagPojo
 import okhttp3.FormBody
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -96,7 +95,7 @@ class UserPictureApiClient internal constructor(
     }
 
     // TODO fetch and convert one's data from ubyte to pic
-    fun fetchPic(fileUrl: String): Triple<Boolean, String, BufferedImage?>{
+    fun fetchPic(fileUrl: String): Triple<Boolean, String, BufferedImage?> {
         val request = Request.Builder()
             .url(fileUrl)
             .header("Authorization", apiClient.token)

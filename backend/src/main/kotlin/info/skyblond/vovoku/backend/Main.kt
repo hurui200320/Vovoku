@@ -19,10 +19,6 @@ import io.javalin.http.UnauthorizedResponse
 import io.javalin.plugin.json.JavalinJackson
 import org.slf4j.LoggerFactory
 import java.security.spec.RSAPublicKeySpec
-import java.util.*
-import javax.crypto.KeyGenerator
-import javax.crypto.spec.IvParameterSpec
-import javax.crypto.spec.SecretKeySpec
 
 
 fun main() {
@@ -100,12 +96,6 @@ fun main() {
                     get(UserFileHandler.fileResolveHandler)
                 }
             }
-
-
-            // TODO 上传文件，数据部分小于4KB则写入数据库 base64://${data}
-            //      否则写入文件 file://...path///
-            //      只写入字节数据，一个字节一个单色亮度值（0-黑，255-亮）
-            //      元数据存入TagInfo：宽、高、通道数
         }
         path("admin") {
             // Admin接口约等于数据库操作的封装
@@ -117,6 +107,9 @@ fun main() {
             }
             path("models") {
                 post(AdminModelHandler)
+            }
+            path("files") {
+                // TODO READ - 给定filePath取出数据
             }
         }
     }

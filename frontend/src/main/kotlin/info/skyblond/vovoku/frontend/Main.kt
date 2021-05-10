@@ -7,7 +7,6 @@ import info.skyblond.vovoku.commons.models.Page
 import info.skyblond.vovoku.frontend.api.admin.AdminApiClient
 import info.skyblond.vovoku.frontend.api.user.UserApiClient
 import okhttp3.OkHttpClient
-import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
 
