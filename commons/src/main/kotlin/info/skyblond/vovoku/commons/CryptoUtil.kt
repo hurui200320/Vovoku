@@ -11,6 +11,9 @@ import java.security.spec.RSAPrivateKeySpec
 import java.security.spec.RSAPublicKeySpec
 import java.util.*
 import javax.crypto.Cipher
+import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.IvParameterSpec
 import javax.xml.bind.DatatypeConverter
 
 
@@ -18,6 +21,7 @@ object CryptoUtil {
     private val logger = LoggerFactory.getLogger(CryptoUtil::class.java)
     private val rsaKeyFactory = KeyFactory.getInstance("RSA")
     private const val rsaSignAlgorithm = "SHA512withRSA"
+    private const val aesAlgorithm = "AES/GCM/NoPadding"
 
     fun md5(data: ByteArray): String {
         val md = MessageDigest.getInstance("MD5")
@@ -123,6 +127,37 @@ object CryptoUtil {
         val dataByte = Base64.getUrlDecoder().decode(data)
         return String(
             decryptWithPrivateKey(dataByte, privateKeySpec), StandardCharsets.UTF_8
+        )
+    }
+
+    fun aesEncrypt(data: ByteArray, key: SecretKey, iv: ByteArray): ByteArray {
+        val cipher = Cipher.getInstance(aesAlgorithm)
+        val spec = GCMParameterSpec(128, iv)
+        cipher.init(Cipher.ENCRYPT_MODE, key, spec)
+        return cipher.doFinal(data)
+    }
+
+    fun aesDecrypt(data: ByteArray, key: SecretKey, iv: ByteArray): ByteArray {
+        val cipher = Cipher.getInstance(aesAlgorithm)
+        val spec = GCMParameterSpec(128, iv)
+        cipher.init(Cipher.DECRYPT_MODE, key, spec)
+        return cipher.doFinal(data)
+    }
+
+    private val defaultIv = "https://github.com/hurui200320/Vovoku".toByteArray(StandardCharsets.UTF_8)
+
+    fun aesEncrypt(data: String, key: SecretKey, iv: ByteArray = defaultIv): String {
+        return String(
+            Base64.getUrlEncoder().encode(
+                aesEncrypt(data.toByteArray(StandardCharsets.UTF_8), key, iv)
+            )
+        )
+    }
+
+    fun aesDecrypt(data: String, key: SecretKey, iv: ByteArray = defaultIv): String {
+        val dataByte = Base64.getUrlDecoder().decode(data)
+        return String(
+            aesDecrypt(dataByte, key, iv), StandardCharsets.UTF_8
         )
     }
 }

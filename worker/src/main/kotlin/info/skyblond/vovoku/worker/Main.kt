@@ -100,17 +100,17 @@ fun main() {
                 // parse file path
                 val trainingParameter = currentTask!!.parameter
                 val trainFetcher = CustomDataFetcher(
-                    FilePathUtil.readFromFilePath(currentTask!!.trainingDataBytePath, currentTask!!.dataAccessToken)
+                    FilePathUtil.readFromFilePath(currentTask!!.trainingDataBytePath)
                         .readBytes(),
-                    FilePathUtil.readFromFilePath(currentTask!!.trainingLabelBytePath, currentTask!!.dataAccessToken)
+                    FilePathUtil.readFromFilePath(currentTask!!.trainingLabelBytePath)
                         .readBytes(),
                     currentTask!!.trainingSamplesCount, trainingParameter.seed
                 )
                 val customTrain: DataSetIterator = CustomDataSetIterator(trainingParameter.batchSize, trainFetcher)
                 val testFetcher = CustomDataFetcher(
-                    FilePathUtil.readFromFilePath(currentTask!!.testDataBytePath, currentTask!!.dataAccessToken)
+                    FilePathUtil.readFromFilePath(currentTask!!.testDataBytePath)
                         .readBytes(),
-                    FilePathUtil.readFromFilePath(currentTask!!.testLabelBytePath, currentTask!!.dataAccessToken)
+                    FilePathUtil.readFromFilePath(currentTask!!.testLabelBytePath)
                         .readBytes(),
                     currentTask!!.testSamplesCount, trainingParameter.seed
                 )
@@ -149,7 +149,7 @@ fun main() {
 
                 val temp = File.createTempFile("task_", currentTask!!.taskId.toString())
                 model.save(temp, true)
-                val output = FilePathUtil.writeToFilePath(currentTask!!.modelSavePath, currentTask!!.modelAccessToken)
+                val output = FilePathUtil.writeToFilePath(currentTask!!.modelSavePath)
                 output.write(temp.readBytes())
                 output.close()
                 temp.delete()

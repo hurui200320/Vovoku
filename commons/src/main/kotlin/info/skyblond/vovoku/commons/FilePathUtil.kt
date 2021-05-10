@@ -7,7 +7,7 @@ import java.util.*
 object FilePathUtil {
     private val logger = LoggerFactory.getLogger(FilePathUtil::class.java)
 
-    fun readFromFilePath(path: String, token: String): InputStream {
+    fun readFromFilePath(path: String): InputStream {
         return when {
             checkPrefix(path, "file://") -> FileInputStream(File(path.removePrefix("file://")))
             checkPrefix(path, "base64://") -> ByteArrayInputStream(Base64.getDecoder().decode(path.removePrefix("base64://")))
@@ -15,7 +15,7 @@ object FilePathUtil {
         }
     }
 
-    fun writeToFilePath(path: String, token: String = ""): OutputStream {
+    fun writeToFilePath(path: String): OutputStream {
         when {
             checkPrefix(path, "file://") -> return FileOutputStream(File(path.removePrefix("file://")))
             checkPrefix(path, "base64://") -> throw IllegalAccessException("Cannot write into static base64 datasource")

@@ -13,11 +13,11 @@ import java.sql.ResultSet
 import java.sql.Types
 
 /**
-* TODO
-*   Due to https://github.com/kotlin-orm/ktorm/issues/268
-*   HikariCP will not trigger ktorm to use postgresql way for json type
-*   Thus I create this temp fix to force ktorm use the correct way
-* */
+ * TODO
+ *   Due to https://github.com/kotlin-orm/ktorm/issues/268
+ *   HikariCP will not trigger ktorm to use postgresql way for json type
+ *   Thus I create this temp fix to force ktorm use the correct way
+ * */
 
 inline fun <reified C : Any> BaseTable<*>.postgresJson(
     name: String,

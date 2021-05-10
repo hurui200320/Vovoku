@@ -6,6 +6,7 @@ import info.skyblond.vovoku.backend.handler.admin.AdminModelHandler
 import info.skyblond.vovoku.backend.handler.admin.AdminPictureHandler
 import info.skyblond.vovoku.backend.handler.admin.AdminUserHandler
 import info.skyblond.vovoku.backend.handler.user.UserAccountHandler
+import info.skyblond.vovoku.backend.handler.user.UserFileHandler
 import info.skyblond.vovoku.backend.handler.user.UserPictureHandler
 import info.skyblond.vovoku.backend.handler.user.UserPublicApiHandler
 import info.skyblond.vovoku.backend.redis.RedisUtil
@@ -17,8 +18,11 @@ import io.javalin.core.util.Header
 import io.javalin.http.UnauthorizedResponse
 import io.javalin.plugin.json.JavalinJackson
 import org.slf4j.LoggerFactory
-import java.io.File
 import java.security.spec.RSAPublicKeySpec
+import java.util.*
+import javax.crypto.KeyGenerator
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
 
 
 fun main() {
@@ -92,7 +96,9 @@ fun main() {
             path("file") {
                 // 接口需要将 file:// 的路径转换为http可达的路径
                 // 该接口提供对应数据的交互功能：仅下载
-
+                path(":tagId") {
+                    get(UserFileHandler.fileResolveHandler)
+                }
             }
 
 

@@ -2,14 +2,10 @@ package info.skyblond.vovoku.backend.database
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import com.zaxxer.hikari.pool.HikariProxyPreparedStatement
 import info.skyblond.vovoku.backend.config.ConfigUtil
 import org.ktorm.database.Database
-import org.ktorm.jackson.JsonSqlType
 import org.ktorm.logging.Slf4jLoggerAdapter
 import org.ktorm.support.postgresql.PostgreSqlDialect
-import org.postgresql.ds.PGConnectionPoolDataSource
-import org.postgresql.ds.PGSimpleDataSource
 import org.slf4j.LoggerFactory
 
 object DatabaseUtil : AutoCloseable {
@@ -26,16 +22,9 @@ object DatabaseUtil : AutoCloseable {
         hikariConfig.username = databaseConfig.username
         hikariConfig.password = databaseConfig.password
         hikariDataSource = HikariDataSource(hikariConfig)
-//        val tempDataSource = PGSimpleDataSource()
-//        tempDataSource.databaseName = "postgres"
-//        tempDataSource.serverNames = arrayOf("localhost")
-//        tempDataSource.portNumbers = intArrayOf(5432)
-//        tempDataSource.user = databaseConfig.username
-//        tempDataSource.password = databaseConfig.password
 
         database = Database.connect(
             dataSource = hikariDataSource,
-//            dataSource = tempDataSource,
             dialect = PostgreSqlDialect(),
             logger = Slf4jLoggerAdapter(logger)
         )

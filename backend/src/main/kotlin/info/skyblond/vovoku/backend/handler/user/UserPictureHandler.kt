@@ -5,13 +5,13 @@ import info.skyblond.vovoku.backend.database.DatabaseUtil
 import info.skyblond.vovoku.backend.database.PictureTag
 import info.skyblond.vovoku.backend.database.PictureTags
 import info.skyblond.vovoku.commons.FilePathUtil
+import info.skyblond.vovoku.commons.models.DatabasePictureTagPojo
+import info.skyblond.vovoku.commons.models.Page
 import info.skyblond.vovoku.commons.models.PictureTagEntry
-import io.javalin.http.BadRequestResponse
-import io.javalin.http.Handler
-import io.javalin.http.InternalServerErrorResponse
-import org.ktorm.entity.add
-import org.ktorm.entity.sequenceOf
-import org.ktorm.jackson.JsonSqlType
+import io.javalin.http.*
+import org.ktorm.dsl.and
+import org.ktorm.dsl.eq
+import org.ktorm.entity.*
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.*
@@ -20,9 +20,56 @@ object UserPictureHandler {
     private val logger = LoggerFactory.getLogger(UserPictureHandler::class.java)
     private val database = DatabaseUtil.database
 
-    val updateTagNumberHandler = Handler { ctx -> TODO() }
-    val deletePicHandler = Handler { ctx -> TODO() }
-    val getOnePicHandler = Handler { ctx -> TODO() }
+    private fun picEntityToPojo(ctx: Context, entity: PictureTag): DatabasePictureTagPojo{
+        return entity.let {
+            it.toPojo().copy(filePath = ctx.fullUrl().removeSuffix(ctx.path()) + UserFileHandler.HANDLER_PATH + it.tagId)
+        }
+    }
+
+    val updateTagNumberHandler = Handler { ctx ->
+        val userId = ctx.attribute<Int>(UserPublicApiHandler.USER_ID_ATTR_NAME)
+            ?: throw InternalServerErrorResponse("Cannot parse token for user id")
+        val tagId = ctx.pathParam<Int>("picTagId").get()
+        val newTag = ctx.formParam<Int>("newTag").check({ it in 0..9 }).get()
+
+        val entity = database.sequenceOf(PictureTags)
+            .find { (it.userId eq userId) and (it.tagId eq tagId) }
+            .let { it ?: throw  NotFoundResponse("Pic not found") }
+
+        entity.tagData = entity.tagData.copy(tag = newTag)
+        entity.flushChanges()
+
+        ctx.json(picEntityToPojo(ctx, entity))
+    }
+
+    val deletePicHandler = Handler { ctx ->
+        val userId = ctx.attribute<Int>(UserPublicApiHandler.USER_ID_ATTR_NAME)
+            ?: throw InternalServerErrorResponse("Cannot parse token for user id")
+        val tagId = ctx.pathParam<Int>("picTagId").get()
+
+        database.sequenceOf(PictureTags)
+            .find { (it.userId eq userId) and (it.tagId eq tagId) }
+            .let { it ?: throw  NotFoundResponse("Pic not found") }
+            .delete()
+
+        ctx.status(204)
+    }
+
+
+    val getOnePicHandler = Handler { ctx ->
+        val userId = ctx.attribute<Int>(UserPublicApiHandler.USER_ID_ATTR_NAME)
+            ?: throw InternalServerErrorResponse("Cannot parse token for user id")
+        val tagId = ctx.pathParam<Int>("picTagId").get()
+
+        ctx.json(database.sequenceOf(PictureTags)
+            .find { (it.userId eq userId) and (it.tagId eq tagId) }
+            .let { it ?: throw  NotFoundResponse("Pic not found") }
+            .let {
+                picEntityToPojo(ctx, it)
+            }
+        )
+    }
+
     val uploadNewPicHandler = Handler { ctx ->
         val userId = ctx.attribute<Int>(UserPublicApiHandler.USER_ID_ATTR_NAME)
             ?: throw InternalServerErrorResponse("Cannot parse token for user id")
@@ -61,7 +108,26 @@ object UserPictureHandler {
         }
         database.sequenceOf(PictureTags)
             .add(entry)
-        ctx.json(entry.toPojo())
+        ctx.json(picEntityToPojo(ctx, entry))
     }
-    val listPicHandler = Handler { ctx -> TODO() }
+
+    val listPicHandler = Handler { ctx ->
+        val userId = ctx.attribute<Int>(UserPublicApiHandler.USER_ID_ATTR_NAME)
+            ?: throw InternalServerErrorResponse("Cannot parse token for user id")
+
+        val page = Page(
+            ctx.formParam<Int>("page").check({ it > 0 }).getOrNull(),
+            ctx.formParam<Int>("size").check({ it > 0 }).getOrNull()
+        )
+
+        ctx.json(database.sequenceOf(PictureTags)
+            .filter { it.userId eq userId }
+            .sortedBy { it.tagId }
+            .drop(page.offset)
+            .take(page.limit)
+            .map {
+                picEntityToPojo(ctx, it)
+            }
+        )
+    }
 }

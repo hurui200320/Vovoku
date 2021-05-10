@@ -56,9 +56,7 @@ class WorkerTest {
                     "file://D:\\Git\\github\\Vovoku\\worker\\test_image_byte.bin",
                     "file://D:\\Git\\github\\Vovoku\\worker\\test_label_byte.bin",
                     10000,
-                    "",
-                    "file://D:\\Git\\github\\Vovoku\\test.model",
-                    ""
+                    "file://D:\\Git\\github\\Vovoku\\test.model"
                 )
             )
         )
