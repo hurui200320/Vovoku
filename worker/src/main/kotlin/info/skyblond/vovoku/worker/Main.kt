@@ -1,11 +1,13 @@
 package info.skyblond.vovoku.worker
 
 import info.skyblond.vovoku.commons.*
+import info.skyblond.vovoku.commons.dl4j.DataFetcherParameter
+import info.skyblond.vovoku.commons.dl4j.DataSetIteratorParameter
+import info.skyblond.vovoku.commons.dl4j.ModelPrototype
+import info.skyblond.vovoku.commons.dl4j.MultiLayerNetworkParameter
 import info.skyblond.vovoku.commons.models.TrainingTaskDistro
 import info.skyblond.vovoku.commons.models.TrainingTaskReport
 import info.skyblond.vovoku.commons.redis.JedisLock
-import info.skyblond.vovoku.worker.datavec.CustomDataFetcher
-import info.skyblond.vovoku.worker.datavec.CustomDataSetIterator
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.nd4j.evaluation.classification.Evaluation
 import org.nd4j.evaluation.classification.ROCMultiClass
@@ -97,33 +99,53 @@ fun main() {
             try {
                 logger.info("Start training task: ${currentTask!!.taskId}")
 
-                // parse file path
                 val trainingParameter = currentTask!!.parameter
-                val trainFetcher = CustomDataFetcher(
-                    FilePathUtil.readFromFilePath(currentTask!!.trainingDataBytePath)
-                        .readBytes(),
-                    FilePathUtil.readFromFilePath(currentTask!!.trainingLabelBytePath)
-                        .readBytes(),
-                    currentTask!!.trainingSamplesCount, trainingParameter.seed
-                )
-                val customTrain: DataSetIterator = CustomDataSetIterator(trainingParameter.batchSize, trainFetcher)
-                val testFetcher = CustomDataFetcher(
-                    FilePathUtil.readFromFilePath(currentTask!!.testDataBytePath)
-                        .readBytes(),
-                    FilePathUtil.readFromFilePath(currentTask!!.testLabelBytePath)
-                        .readBytes(),
-                    currentTask!!.testSamplesCount, trainingParameter.seed
-                )
-                val customTest: DataSetIterator = CustomDataSetIterator(trainingParameter.batchSize, testFetcher)
+                val prototype = ModelPrototype.getPrototype(trainingParameter.modelIdentifier)
+                    ?: throw IllegalArgumentException("Invalid model identifier: ${trainingParameter.modelIdentifier}")
 
-                val updater = parseUpdater(trainingParameter.updater, trainingParameter.updateParameters)
+                val trainFetcher = prototype.dataFetcherFactory.getDataFetcher(
+                    DataFetcherParameter(
+                        FilePathUtil.readFromFilePath(currentTask!!.trainingDataBytePath)
+                            .readBytes(),
+                        FilePathUtil.readFromFilePath(currentTask!!.trainingLabelBytePath)
+                            .readBytes(),
+                        trainingParameter.inputSize, trainingParameter.outputSize,
+                        currentTask!!.trainingSamplesCount, trainingParameter.seed
+                    )
+                )
+                val customTrain: DataSetIterator = prototype.dataSetIteratorFactory.getDataSetIterator(
+                    trainFetcher, DataSetIteratorParameter(
+                        trainingParameter.batchSize,
+                        currentTask!!.trainingSamplesCount,
+                    )
+                )
 
-                val conf = getNeuralNetworkConfig(
-                    trainingParameter.seed, updater,
-                    trainingParameter.l2,
-                    trainingParameter.hiddenLayerSize,
-                    trainingParameter.inputWidth * trainingParameter.inputHeight,
-                    trainingParameter.outputSize
+                val testFetcher = prototype.dataFetcherFactory.getDataFetcher(
+                    DataFetcherParameter(
+                        FilePathUtil.readFromFilePath(currentTask!!.testDataBytePath)
+                            .readBytes(),
+                        FilePathUtil.readFromFilePath(currentTask!!.testLabelBytePath)
+                            .readBytes(),
+                        trainingParameter.inputSize, trainingParameter.outputSize,
+                        currentTask!!.testSamplesCount, trainingParameter.seed
+                    )
+                )
+                val customTest: DataSetIterator = prototype.dataSetIteratorFactory.getDataSetIterator(
+                    testFetcher, DataSetIteratorParameter(
+                        trainingParameter.batchSize,
+                        currentTask!!.testSamplesCount,
+                    )
+                )
+
+                val conf = prototype.getMultiLayerConfiguration(
+                    MultiLayerNetworkParameter(
+                        prototype.getModelInputSizeFromDataInputSize(trainingParameter.inputSize),
+                        prototype.getModelOutputSizeFromLabelSize(trainingParameter.outputSize),
+                        trainingParameter.updater,
+                        trainingParameter.updateParameters,
+                        trainingParameter.networkParameter,
+                        trainingParameter.seed
+                    )
                 )
 
                 val model = MultiLayerNetwork(conf)

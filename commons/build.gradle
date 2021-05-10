@@ -28,6 +28,10 @@ dependencies {
 
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
 
+    // DL4J
+    implementation 'org.deeplearning4j:deeplearning4j-core:1.0.0-beta7'
+    implementation 'org.nd4j:nd4j-native-platform:1.0.0-beta7'
+
 }
 
 test {

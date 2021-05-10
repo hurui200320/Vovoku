@@ -1,35 +1,50 @@
 package info.skyblond.vovoku.commons.models
 
+import info.skyblond.vovoku.commons.dl4j.Updater
+
 // TODO
 
 data class ModelTrainingParameter(
+    val modelIdentifier: String,
     val batchSize: Int,
     val epochs: Int,
-    val inputWidth: Int,
-    val inputHeight: Int,
-    val hiddenLayerSize: Int,
-    val outputSize: Int,
+    val inputSize: IntArray,
+    val outputSize: IntArray,
     val updater: Updater,
-    val updateParameters: List<Double>,
-    val l2: Double,
+    val updateParameters: DoubleArray,
+    val networkParameter: DoubleArray,
     val seed: Long
 ) {
-    enum class Updater {
-        /**
-         * Parameter:
-         *  learningRate = 1e-3,
-         *  beta1 = 0.9,
-         *  beta2 = 0.999,
-         *  epsilon = 1e-8
-         * */
-        Adam,
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
 
-        /**
-         * Parameter:
-         *  learningRate = 0.1,
-         *  momentum = 0.9
-         * */
-        Nesterovs
+        other as ModelTrainingParameter
+
+        if (modelIdentifier != other.modelIdentifier) return false
+        if (batchSize != other.batchSize) return false
+        if (epochs != other.epochs) return false
+        if (!inputSize.contentEquals(other.inputSize)) return false
+        if (!outputSize.contentEquals(other.outputSize)) return false
+        if (updater != other.updater) return false
+        if (!updateParameters.contentEquals(other.updateParameters)) return false
+        if (!networkParameter.contentEquals(other.networkParameter)) return false
+        if (seed != other.seed) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = modelIdentifier.hashCode()
+        result = 31 * result + batchSize
+        result = 31 * result + epochs
+        result = 31 * result + inputSize.contentHashCode()
+        result = 31 * result + outputSize.contentHashCode()
+        result = 31 * result + updater.hashCode()
+        result = 31 * result + updateParameters.contentHashCode()
+        result = 31 * result + networkParameter.contentHashCode()
+        result = 31 * result + seed.hashCode()
+        return result
     }
 }
 

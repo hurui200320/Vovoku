@@ -5,6 +5,8 @@ import info.skyblond.vovoku.commons.JacksonJsonUtil
 import info.skyblond.vovoku.commons.RedisTaskDistributionChannel
 import info.skyblond.vovoku.commons.RedisTaskReportChannel
 import info.skyblond.vovoku.commons.RedisTokenToUserPrefix
+import info.skyblond.vovoku.commons.dl4j.ModelPrototype
+import info.skyblond.vovoku.commons.dl4j.Updater
 import info.skyblond.vovoku.commons.models.ModelTrainingParameter
 import info.skyblond.vovoku.commons.models.TrainingTaskDistro
 import org.slf4j.LoggerFactory
@@ -80,15 +82,14 @@ object RedisUtil : AutoCloseable {
                     TrainingTaskDistro(
                         Random.nextInt(),
                         ModelTrainingParameter(
+                            ModelPrototype.MNIST_MLP_NAME,
                             128,
                             3,
-                            28,
-                            28,
-                            1000,
-                            10,
-                            ModelTrainingParameter.Updater.Nesterovs,
-                            listOf(0.1, 0.9),
-                            1e-4,
+                            intArrayOf(28, 28),
+                            intArrayOf(10),
+                            Updater.Nesterovs,
+                            doubleArrayOf(0.1, 0.9),
+                            doubleArrayOf(1e-4, 1000.0),
                             123L
                         ),
                         "file://D:\\Git\\github\\Vovoku\\worker\\train_image_byte.bin",

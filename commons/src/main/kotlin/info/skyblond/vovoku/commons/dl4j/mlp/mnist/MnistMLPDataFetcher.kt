@@ -1,4 +1,4 @@
-package info.skyblond.vovoku.worker.datavec
+package info.skyblond.vovoku.commons.dl4j.mlp.mnist
 
 import org.nd4j.common.util.MathUtils
 import org.nd4j.linalg.api.buffer.DataType
@@ -10,17 +10,17 @@ import org.nd4j.linalg.indexing.NDArrayIndex
 import java.io.ByteArrayInputStream
 import java.util.*
 
-class CustomDataFetcher(
+class MnistMLPDataFetcher(
     imagesByteData: ByteArray,
     labelsByteData: ByteArray,
     val numExamples: Int,
+    private val imageWidth: Int = 28,
+    private val imageHeight: Int  = 28,
+    labelNum: Int  = 10,
     seed: Long
 ) : BaseDataFetcher() {
     private var order: IntArray
     private var featureData: Array<FloatArray>? = null
-    private val imageWidth = 28
-    private val imageHeight = 28
-    private val labelNum = 10 // 0..9
     private var rng = Random(seed)
     private val imageByteArray: Array<ByteArray>
     private val labelArray: IntArray
@@ -28,6 +28,10 @@ class CustomDataFetcher(
     init {
         require(imagesByteData.size == numExamples * imageWidth * imageHeight) { "Byte data size not match examples number" }
         require(labelsByteData.size == numExamples * Integer.BYTES) { "Byte data size not match examples number" }
+        require(imageWidth > 0) {"Input width must bigger than 0"}
+        require(imageHeight > 0) {"Input height must bigger than 0"}
+        require(labelNum > 0) {"Label size must bigger than 0"}
+
         numOutcomes = labelNum
         cursor = 0
         inputColumns = imageWidth * imageHeight
