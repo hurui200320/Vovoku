@@ -2,6 +2,7 @@ package info.skyblond.vovoku.backend.handler.user
 
 import info.skyblond.vovoku.backend.database.DatabaseUtil
 import info.skyblond.vovoku.backend.database.Users
+import info.skyblond.vovoku.backend.handler.getUserId
 import info.skyblond.vovoku.commons.CryptoUtil
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.Handler
@@ -17,8 +18,7 @@ object UserAccountHandler {
     private val database = DatabaseUtil.database
 
     val whoAmIHandler = Handler { ctx ->
-        val userId = ctx.attribute<Int>(UserPublicApiHandler.USER_ID_ATTR_NAME)
-            ?: throw InternalServerErrorResponse("Cannot parse token for user id")
+        val userId = ctx.getUserId()
         val entity = database.sequenceOf(Users)
             .find { it.userId eq userId } ?: throw InternalServerErrorResponse("User id not found")
 
@@ -33,8 +33,7 @@ object UserAccountHandler {
 
 
     val deleteHandler = Handler { ctx ->
-        val userId = ctx.attribute<Int>(UserPublicApiHandler.USER_ID_ATTR_NAME)
-            ?: throw InternalServerErrorResponse("Cannot parse token for user id")
+        val userId = ctx.getUserId()
         val username = ctx.formParam<String>("username").get()
         val passwordRaw = ctx.formParam<String>("password_raw").get()
         val entity = database.sequenceOf(Users)

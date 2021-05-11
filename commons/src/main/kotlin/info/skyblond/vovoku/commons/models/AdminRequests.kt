@@ -29,17 +29,35 @@ interface AdminCRUDRequest {
     val operation: CRUD
 }
 
-data class AdminUserRequest(
-    val pojo: DatabaseUserPojo,
+data class AdminRequest(
     override val operation: CRUD,
-    val page: Page? = null,
-) : AdminCRUDRequest
+    val parameter: Map<String, Any>,
+    val page: Page = Page(null, null),
+) : AdminCRUDRequest {
+    inline fun <reified T> typedParameter(key: String): T? {
+        val obj = parameter[key] ?: return null
+        require(obj is T) { "Parameter '$key' is not instance of ${T::class.java.canonicalName}" }
+        return obj
+    }
 
-data class AdminPictureTagRequest(
-    val pojo: DatabasePictureTagPojo,
-    override val operation: CRUD,
-    val page: Page? = null,
-) : AdminCRUDRequest
+    companion object {
+        const val USER_ID_KEY = "userId"
+        const val USERNAME_KEY = "username"
+        const val USER_PASSWORD_KEY = "userPassword"
+
+        const val TAG_ID_KEY = "tagId"
+        const val TAG_DATA_KEY = "tagData"
+
+        const val MODEL_ID_KEY = "modelID"
+
+        const val FILE_PATH_KEY = "filePath"
+        const val FILE_TYPE_KEY = "fileType"
+        const val FILE_TYPE_VALUE_MODEL = "model"
+        const val FILE_TYPE_VALUE_PICTURE = "picture"
+        const val FILE_ID_KEY = "fileId"
+    }
+
+}
 
 data class AdminModelRequest(
     val pojo: DatabaseModelInfoPojo,

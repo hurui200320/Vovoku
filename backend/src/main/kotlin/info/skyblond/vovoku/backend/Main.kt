@@ -1,10 +1,7 @@
 package info.skyblond.vovoku.backend
 
 import info.skyblond.vovoku.backend.config.ConfigUtil
-import info.skyblond.vovoku.backend.handler.admin.AdminCRUDHandler
-import info.skyblond.vovoku.backend.handler.admin.AdminModelHandler
-import info.skyblond.vovoku.backend.handler.admin.AdminPictureHandler
-import info.skyblond.vovoku.backend.handler.admin.AdminUserHandler
+import info.skyblond.vovoku.backend.handler.admin.*
 import info.skyblond.vovoku.backend.handler.user.*
 import info.skyblond.vovoku.backend.redis.RedisUtil
 import info.skyblond.vovoku.commons.CryptoUtil
@@ -15,14 +12,16 @@ import io.javalin.core.util.Header
 import io.javalin.http.UnauthorizedResponse
 import io.javalin.plugin.json.JavalinJackson
 import org.slf4j.LoggerFactory
-import java.security.spec.RSAPublicKeySpec
+import java.util.*
+import javax.crypto.spec.SecretKeySpec
+import javax.xml.bind.DatatypeConverter
 
 
 fun main() {
     val logger = LoggerFactory.getLogger("Application")
 
     val apiConfig = ConfigUtil.config.api
-    val pubKey = apiConfig.publicKeySpec.restore<RSAPublicKeySpec>()
+    val aesKey = SecretKeySpec(DatatypeConverter.parseHexBinary(apiConfig.adminAesKey), "AES")
 
     JavalinJackson.configure(JacksonJsonUtil.jsonMapper)
     val app = Javalin.create { config ->
@@ -37,14 +36,23 @@ fun main() {
 
     app.before("/admin/*") { ctx ->
         val signHeader = ctx.header(Header.AUTHORIZATION) ?: throw UnauthorizedResponse("Signature required")
-        if (!CryptoUtil.verifyWithPublicKey(ctx.body(), signHeader, pubKey))
+        val md5 = CryptoUtil.md5(ctx.body()).toLowerCase()
+        if (CryptoUtil.aesDecrypt(signHeader, aesKey).toLowerCase() != md5)
             throw UnauthorizedResponse("Invalidate signature")
     }
 
     app.after("/admin/*") { ctx ->
         if (ctx.attribute<Boolean>(AdminCRUDHandler.ENCRYPTION_IDENTIFIER_KEY) == true) {
-            val result = ctx.resultString() ?: return@after
-            ctx.result(CryptoUtil.encryptWithPublicKey(result, pubKey))
+            val bytes = ctx.resultStream()?.readBytes() ?: return@after
+            ctx.result(
+                Base64.getUrlEncoder().encodeToString(
+                    CryptoUtil.aesEncrypt(
+                        bytes,
+                        aesKey,
+                        CryptoUtil.defaultIv
+                    )
+                )
+            )
         }
     }
 
@@ -105,8 +113,15 @@ fun main() {
             path("file") {
                 // 接口需要将 file:// 的路径转换为http可达的路径
                 // 该接口提供对应数据的交互功能：仅下载
-                path(":tagId") {
-                    get(UserFileHandler.fileResolveHandler)
+                path("pic") {
+                    path(":picId") {
+                        get(UserFileHandler.picResolveHandler)
+                    }
+                }
+                path("model") {
+                    path(":modelId") {
+                        get(UserFileHandler.modelResolveHandler)
+                    }
                 }
             }
         }
@@ -122,7 +137,7 @@ fun main() {
                 post(AdminModelHandler)
             }
             path("files") {
-                // TODO READ - 给定filePath取出数据
+                post(AdminFileHandler)
             }
         }
     }

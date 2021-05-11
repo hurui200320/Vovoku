@@ -6,7 +6,7 @@ import java.security.KeyPairGenerator
 import java.security.spec.RSAPrivateKeySpec
 import java.security.spec.RSAPublicKeySpec
 
-internal class CryptoUtilTest {
+internal class CryptoUtilRSATest {
     private val rsaPublicKeySpec: RSAPublicKeySpec
     private val rsaPrivateKeySpec: RSAPrivateKeySpec
 

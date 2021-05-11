@@ -36,6 +36,7 @@ dependencies {
     implementation 'redis.clients:jedis:3.5.+'
     // commons
     implementation project(":commons")
+    implementation 'javax.xml.bind:jaxb-api:2.3.+'
 }
 
 compileKotlin {

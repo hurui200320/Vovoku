@@ -4,6 +4,8 @@ import info.skyblond.vovoku.backend.config.ConfigUtil
 import info.skyblond.vovoku.backend.database.DatabaseUtil
 import info.skyblond.vovoku.backend.database.PictureTag
 import info.skyblond.vovoku.backend.database.PictureTags
+import info.skyblond.vovoku.backend.handler.getPage
+import info.skyblond.vovoku.backend.handler.getUserId
 import info.skyblond.vovoku.commons.FilePathUtil
 import info.skyblond.vovoku.commons.models.Page
 import info.skyblond.vovoku.commons.models.PictureTagEntry
@@ -23,8 +25,7 @@ object UserPictureHandler {
     private val database = DatabaseUtil.database
 
     val updateTagNumberHandler = Handler { ctx ->
-        val userId = ctx.attribute<Int>(UserPublicApiHandler.USER_ID_ATTR_NAME)
-            ?: throw InternalServerErrorResponse("Cannot parse token for user id")
+        val userId = ctx.getUserId()
         val tagId = ctx.pathParam<Int>("picTagId").get()
         val newTag = ctx.formParam<Int>("newTag").check({ it in 0..9 }).get()
 
@@ -39,8 +40,7 @@ object UserPictureHandler {
     }
 
     val deletePicHandler = Handler { ctx ->
-        val userId = ctx.attribute<Int>(UserPublicApiHandler.USER_ID_ATTR_NAME)
-            ?: throw InternalServerErrorResponse("Cannot parse token for user id")
+        val userId = ctx.getUserId()
         val tagId = ctx.pathParam<Int>("picTagId").get()
 
         database.sequenceOf(PictureTags)
@@ -53,8 +53,7 @@ object UserPictureHandler {
 
 
     val getOnePicHandler = Handler { ctx ->
-        val userId = ctx.attribute<Int>(UserPublicApiHandler.USER_ID_ATTR_NAME)
-            ?: throw InternalServerErrorResponse("Cannot parse token for user id")
+        val userId = ctx.getUserId()
         val tagId = ctx.pathParam<Int>("picTagId").get()
 
         ctx.json(
@@ -66,8 +65,7 @@ object UserPictureHandler {
     }
 
     val uploadNewPicHandler = Handler { ctx ->
-        val userId = ctx.attribute<Int>(UserPublicApiHandler.USER_ID_ATTR_NAME)
-            ?: throw InternalServerErrorResponse("Cannot parse token for user id")
+        val userId = ctx.getUserId()
 
         val width = ctx.formParam<Int>("width").check({ it > 0 }).get()
         val height = ctx.formParam<Int>("height").check({ it > 0 }).get()
@@ -110,13 +108,8 @@ object UserPictureHandler {
     }
 
     val listPicHandler = Handler { ctx ->
-        val userId = ctx.attribute<Int>(UserPublicApiHandler.USER_ID_ATTR_NAME)
-            ?: throw InternalServerErrorResponse("Cannot parse token for user id")
-
-        val page = Page(
-            ctx.queryParam<Int>("page").check({ it > 0 }).getOrNull(),
-            ctx.queryParam<Int>("size").check({ it > 0 }).getOrNull()
-        )
+        val userId = ctx.getUserId()
+        val page = ctx.getPage()
 
         ctx.json(database.sequenceOf(PictureTags)
             .filter { it.userId eq userId }

@@ -109,7 +109,7 @@ class UserPictureApiClient internal constructor(
                     val height = response.header("pic_height")?.toInt()!!
                     val channel = response.header("pic_channel")?.toInt()!!
                     val image = UBytePicUtil.uByteArrayToPic(
-                        width, height, channel, response.body?.byteStream()?.readBytes()!!
+                        width, height, channel, response.body?.bytes()!!
                     )
                     Triple(true, "OK", image)
                 } else {

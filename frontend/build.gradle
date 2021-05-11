@@ -26,7 +26,7 @@ dependencies {
     // commons
     implementation project(":commons")
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.+'
-
+    implementation 'javax.xml.bind:jaxb-api:2.3.+'
 }
 
 compileKotlin {

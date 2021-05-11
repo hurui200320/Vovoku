@@ -13,10 +13,9 @@ interface User : Entity<User> {
     var password: String
 
     fun toPojo(): DatabaseUserPojo = DatabaseUserPojo(userId, username, password)
-    fun update(pojo: DatabaseUserPojo) {
-        require(userId == pojo.userId) { "Different user id" }
-        pojo.username?.let { username = it }
-        pojo.password?.let { password = it }
+    fun update(username: String?, password: String?) {
+        username?.let { this.username = it }
+        password?.let { this.password = it }
         flushChanges()
     }
 }
@@ -30,19 +29,23 @@ interface PictureTag : Entity<PictureTag> {
     var tagData: PictureTagEntry
 
     fun toPojo(ctx: Context): DatabasePictureTagPojo = DatabasePictureTagPojo(
-        tagId, ctx.url().removeSuffix(ctx.path()) + UserFileHandler.HANDLER_PATH + tagId, userId, tagData
+        tagId,
+        ctx.url().removeSuffix(ctx.path()) + UserFileHandler.PICTURE_HANDLER_PATH + tagId,
+        userId,
+        tagData
     )
 
-    // TODO Admin api?
     fun toPojo(): DatabasePictureTagPojo = DatabasePictureTagPojo(
         tagId, filePath, userId, tagData
     )
 
-    fun update(pojo: DatabasePictureTagPojo) {
-        require(tagId == pojo.tagId) { "Different tag id" }
-        pojo.tagData?.let {
+    fun update(tag: Int?) {
+        tag?.let {
             // full update, admin take charge of data correctness
-            val newPojo = PictureTagEntry(it.width, it.height, it.channelCount, it.tag)
+            val newPojo = PictureTagEntry(
+                tagData.width, tagData.height,
+                tagData.channelCount, it
+            )
             tagData = newPojo
         }
         flushChanges()
@@ -59,7 +62,16 @@ interface ModelInfo : Entity<ModelInfo> {
     val createInfo: ModelCreateInfo
     val trainingInfo: ModelTrainingInfo
 
+    // TODO Admin api?
     fun toPojo(): DatabaseModelInfoPojo = DatabaseModelInfoPojo(
         modelId, filePath, userId, createInfo, trainingInfo
+    )
+
+    fun toPojo(ctx: Context): DatabaseModelInfoPojo = DatabaseModelInfoPojo(
+        modelId,
+        ctx.url().removeSuffix(ctx.path()) + UserFileHandler.MODEL_HANDLER_PATH + modelId,
+        userId,
+        createInfo,
+        trainingInfo
     )
 }

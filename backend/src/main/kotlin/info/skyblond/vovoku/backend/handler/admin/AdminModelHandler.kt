@@ -3,7 +3,7 @@ package info.skyblond.vovoku.backend.handler.admin
 import info.skyblond.vovoku.backend.database.DatabaseUtil
 import info.skyblond.vovoku.backend.database.ModelInfo
 import info.skyblond.vovoku.backend.database.ModelInfos
-import info.skyblond.vovoku.commons.models.AdminModelRequest
+import info.skyblond.vovoku.commons.models.AdminRequest
 import info.skyblond.vovoku.commons.models.ModelTrainingStatus
 import info.skyblond.vovoku.commons.models.Page
 import io.javalin.http.BadRequestResponse
@@ -13,58 +13,72 @@ import org.ktorm.entity.*
 import org.slf4j.LoggerFactory
 import java.sql.Timestamp
 
-object AdminModelHandler : AdminCRUDHandler<AdminModelRequest>(AdminModelRequest::class.java) {
+object AdminModelHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.java) {
     private val logger = LoggerFactory.getLogger(AdminModelHandler::class.java)
     private val database = DatabaseUtil.database
 
     private fun query(
-        request: AdminModelRequest,
-        paging: Boolean = true
+        modelId: Int?,
+        userId: Int?,
+        filePath: String?,
+        page: Page?
     ): EntitySequence<ModelInfo, ModelInfos> {
         return database.sequenceOf(ModelInfos)
             .let { sequence ->
-                if (request.pojo.modelId != null) {
-                    sequence.filter { it.modelId eq request.pojo.modelId!! }
+                if (modelId != null) {
+                    sequence.filter { it.modelId eq modelId }
                 } else {
                     sequence
                 }
             }
             .let { sequence ->
-                if (request.pojo.userId != null) {
-                    sequence.filter { it.userId eq request.pojo.userId!! }
+                if (userId != null) {
+                    sequence.filter { it.userId eq userId }
                 } else {
                     sequence
                 }
             }
             .let { sequence ->
-                if (request.pojo.filePath != null) {
-                    sequence.filter { it.filePath eq "${request.pojo.filePath!!}%" }
+                if (filePath != null) {
+                    sequence.filter { it.filePath eq "${filePath}%" }
                 } else {
                     sequence
                 }
             }
             .sortedBy { it.modelId }
             .let {
-                if (paging) {
-                    it.drop(request.page?.offset ?: Page(null, null).offset)
-                        .take(request.page?.limit ?: Page(null, null).limit)
+                if (page != null) {
+                    it.drop(page.offset)
+                        .take(page.limit)
                 } else {
                     it
                 }
             }
     }
 
-    override fun handleCreate(ctx: Context, request: AdminModelRequest) {
+    override fun handleCreate(ctx: Context, request: AdminRequest) {
         throw NotImplementedError("Admin cannot create new models")
     }
 
-    override fun handleRead(ctx: Context, request: AdminModelRequest) {
-        val result = query(request).map { it.toPojo() }
+    override fun handleRead(ctx: Context, request: AdminRequest) {
+        val result = query(
+            request.typedParameter(AdminRequest.MODEL_ID_KEY),
+            request.typedParameter(AdminRequest.USER_ID_KEY),
+            request.typedParameter(AdminRequest.FILE_PATH_KEY),
+            request.page
+        ).map { it.toPojo() }
         ctx.json(result)
     }
 
-    override fun handleUpdate(ctx: Context, request: AdminModelRequest) {
-        val query = query(request, false)
+    /**
+     * Terminate training by id
+     * */
+    override fun handleUpdate(ctx: Context, request: AdminRequest) {
+        val query = query(
+            request.typedParameter(AdminRequest.MODEL_ID_KEY),
+            null, null,
+            null
+        )
         if (query.totalRecords != 1) {
             throw BadRequestResponse("Cannot update multiple entity at once")
         }
@@ -81,8 +95,13 @@ object AdminModelHandler : AdminCRUDHandler<AdminModelRequest>(AdminModelRequest
         ctx.json(entity.toPojo())
     }
 
-    override fun handleDelete(ctx: Context, request: AdminModelRequest) {
-        val result = query(request, false)
+    override fun handleDelete(ctx: Context, request: AdminRequest) {
+        val result = query(
+            request.typedParameter(AdminRequest.MODEL_ID_KEY),
+            request.typedParameter(AdminRequest.USER_ID_KEY),
+            request.typedParameter(AdminRequest.FILE_PATH_KEY),
+            null
+        )
             .map {
                 it.delete()
                 it.toPojo()

@@ -22,7 +22,7 @@ data class DatabaseConfig(
 data class ApiConfig(
     val host: String = "localhost",
     val port: Int = 7000,
-    val publicKeySpec: CryptoUtil.RSAKeySpec = CryptoUtil.RSAKeySpec("00", "00"),
+    val adminAesKey: String = "",
     val dataFolderPath: String = "./data"
 )
 

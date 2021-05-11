@@ -143,7 +143,7 @@ object CryptoUtil {
         return cipher.doFinal(data)
     }
 
-    private val defaultIv = "https://github.com/hurui200320/Vovoku".toByteArray(StandardCharsets.UTF_8)
+    val defaultIv = "https://github.com/hurui200320/Vovoku".toByteArray(StandardCharsets.UTF_8)
 
     fun aesEncrypt(data: String, key: SecretKey, iv: ByteArray = defaultIv): String {
         return String(
