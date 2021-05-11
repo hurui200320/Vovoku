@@ -89,12 +89,11 @@ class UserPictureApiClient internal constructor(
         return if (response.first == 200) {
             Triple(true, "OK", JacksonJsonUtil.jsonToObject(response.second))
         } else {
-            logger.error("UploadPic failed: Code: ${response.first}, message: ${response.second}")
+            logger.error("FetchPic failed: Code: ${response.first}, message: ${response.second}")
             Triple(false, response.second, null)
         }
     }
 
-    // TODO fetch and convert one's data from ubyte to pic
     fun fetchPic(fileUrl: String): Triple<Boolean, String, BufferedImage?> {
         val request = Request.Builder()
             .url(fileUrl)

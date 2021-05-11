@@ -18,6 +18,7 @@ class UserApiClient(
     private val accountPath = "user/account"
     private val picturePath = "user/picture"
     private val modelPath = "user/model"
+    private val prototypePath = "user/prototype"
 
     internal var token: String = ""
 
@@ -25,6 +26,7 @@ class UserApiClient(
     val accountApiClient = UserAccountApiClient(this, httpClient, "$urlPrefix/$accountPath")
     val pictureApiClient = UserPictureApiClient(this, httpClient, "$urlPrefix/$picturePath")
     val modelApiClient = UserModelApiClient(this, httpClient, "$urlPrefix/$modelPath")
+    val prototypeApiClient = UserPrototypeApiClient(this, httpClient, "$urlPrefix/$prototypePath")
 
     // request with tokens, for sub api clients or raw request
     internal fun doGet(url: String, param: Map<String, Any>): Pair<Int, String> {

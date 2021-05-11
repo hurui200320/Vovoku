@@ -7,7 +7,7 @@ object ConfigUtil {
     val config: Config
     val dataBaseDir: File
     val uploadBaseDir: File
-    val tempDataBaseDir: File
+    val modelBaseDir: File
 
     init {
         config = JacksonYamlUtil.readOrInitConfigFile(File("./config.yaml"), Config())
@@ -23,7 +23,7 @@ object ConfigUtil {
                 require(it.mkdirs()) { "Cannot create upload storage folder: ${it.canonicalPath}" }
         }
 
-        tempDataBaseDir = File(dataBaseDir, "temp").also {
+        modelBaseDir = File(dataBaseDir, "model").also {
             if (!it.isDirectory)
                 it.delete()
             if (!it.exists())
