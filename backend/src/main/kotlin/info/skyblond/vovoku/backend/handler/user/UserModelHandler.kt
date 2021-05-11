@@ -14,7 +14,7 @@ object UserModelHandler {
     val deleteModelHandler = Handler { ctx -> TODO() }
     val getOneModelHandler = Handler { ctx -> TODO() }
     val requestNewModelHandler = Handler { ctx -> TODO() }
-    
+
     val listModelHandler = Handler { ctx -> TODO() }
 
     val getOnePrototypeHandler = Handler { ctx ->
