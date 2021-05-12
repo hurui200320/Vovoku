@@ -20,12 +20,20 @@ class UserPictureApiClient internal constructor(
     private val logger = LoggerFactory.getLogger(UserPictureApiClient::class.java)
     private val urlPrefix: String = _urlPrefix.removeSuffix("/")
 
-    fun listPic(page: Int, size: Int): Triple<Boolean, String, Array<DatabasePictureTagPojo>> {
+    fun listPic(
+        usedForTrain: Boolean?,
+        datasetName: String?,
+        page: Int,
+        size: Int
+    ): Triple<Boolean, String, Array<DatabasePictureTagPojo>> {
         val response = apiClient.doGet(
-            urlPrefix, mapOf(
+            urlPrefix, mutableMapOf<String, Any>(
                 "page" to page,
                 "size" to size
-            )
+            ).apply {
+                usedForTrain?.let { put("train", usedForTrain) }
+                datasetName?.let { put("folder", it) }
+            }
         )
 
         return if (response.first == 200) {
@@ -58,9 +66,24 @@ class UserPictureApiClient internal constructor(
         }
     }
 
-    fun updateOnePicTag(tagId: Int, newTag: Int): Triple<Boolean, String, DatabasePictureTagPojo?> {
+    fun updateOnePicTag(
+        tagId: Int,
+        newTag: Int?,
+        usedForTrain: Boolean?,
+        datasetName: String?
+    ): Triple<Boolean, String, DatabasePictureTagPojo?> {
         val body = FormBody.Builder()
-            .add("newTag", newTag.toString())
+            .apply {
+                newTag?.let {
+                    add("newTag", it.toString())
+                }
+                usedForTrain?.let {
+                    add("train", it.toString())
+                }
+                datasetName?.let {
+                    add("folder", it)
+                }
+            }
             .build()
         val response = apiClient.doPut("$urlPrefix/$tagId", body)
 
@@ -73,7 +96,12 @@ class UserPictureApiClient internal constructor(
     }
 
     // TODO upload pic, convert pic to ubyte first
-    fun uploadPic(image: BufferedImage, tag: Int): Triple<Boolean, String, DatabasePictureTagPojo?> {
+    fun uploadPic(
+        image: BufferedImage,
+        tag: Int,
+        usedForTrain: Boolean,
+        datasetName: String
+    ): Triple<Boolean, String, DatabasePictureTagPojo?> {
         val data = UBytePicUtil.picToUByteArray(image)
         val body = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
@@ -81,6 +109,8 @@ class UserPictureApiClient internal constructor(
             .addFormDataPart("height", data.first.second.toString())
             .addFormDataPart("channel", data.second.toString())
             .addFormDataPart("tag", tag.toString())
+            .addFormDataPart("train", usedForTrain.toString())
+            .addFormDataPart("folder", datasetName)
             .addFormDataPart("data", "data", data.third.toRequestBody("application/octet-stream".toMediaType()))
             .build()
 

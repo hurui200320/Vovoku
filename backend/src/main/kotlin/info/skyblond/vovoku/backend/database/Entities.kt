@@ -27,26 +27,35 @@ interface PictureTag : Entity<PictureTag> {
     var filePath: String
     var userId: Int
     var tagData: PictureTagEntry
+    var usedForTrain: Boolean
+    var folderName: String
 
     fun toPojo(ctx: Context): DatabasePictureTagPojo = DatabasePictureTagPojo(
         tagId,
         ctx.url().removeSuffix(ctx.path()) + UserFileHandler.PICTURE_HANDLER_PATH + tagId,
         userId,
-        tagData
+        tagData,
+        usedForTrain,
+        folderName
     )
 
     fun toPojo(): DatabasePictureTagPojo = DatabasePictureTagPojo(
-        tagId, filePath, userId, tagData
+        tagId, filePath, userId, tagData, usedForTrain, folderName
     )
 
-    fun update(tag: Int?) {
+    fun update(tag: Int?, usedForTrain: Boolean?, folderName: String?) {
         tag?.let {
-            // full update, admin take charge of data correctness
             val newPojo = PictureTagEntry(
                 tagData.width, tagData.height,
                 tagData.channelCount, it
             )
             tagData = newPojo
+        }
+        usedForTrain?.let {
+            this.usedForTrain = it
+        }
+        folderName?.let {
+            this.folderName = it
         }
         flushChanges()
     }

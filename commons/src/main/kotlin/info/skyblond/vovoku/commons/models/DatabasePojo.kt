@@ -10,7 +10,9 @@ data class DatabasePictureTagPojo(
     val tagId: Int,
     val filePath: String,
     val userId: Int,
-    val tagData: PictureTagEntry
+    val tagData: PictureTagEntry,
+    val usedForTrain: Boolean,
+    val folderName: String
 )
 
 data class DatabaseModelInfoPojo(

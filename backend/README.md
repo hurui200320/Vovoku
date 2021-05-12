@@ -75,7 +75,9 @@ create table picture_tag
     tag_id    serial not null,
     file_path text   not null,
     user_id   int    not null,
-    tag_data  json   not null
+    tag_data  json   not null,
+    used_for_train  bool   not null,
+    folder_name  text   not null
 );
 
 create unique index picture_tag_tag_id_uindex

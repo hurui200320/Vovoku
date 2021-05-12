@@ -47,6 +47,8 @@ data class AdminRequest(
 
         const val TAG_ID_KEY = "tagId"
         const val TAG_DATA_KEY = "tagData"
+        const val TAG_FOR_TRAIN_KEY = "tagForTrain"
+        const val TAG_FOLDER_NAME_KEY = "tagFolderName"
 
         const val MODEL_ID_KEY = "modelID"
 

@@ -57,6 +57,8 @@ data class ModelCreateInfo(
     @JsonFormat(shape = JsonFormat.Shape.NUMBER, pattern = "s")
     val createTime: Timestamp,
     val trainingParameter: ModelTrainingParameter,
+    val trainingPics: MutableList<Int>,
+    val testingPics: MutableList<Int>,
     // save this in case model update
     val prototypeDescriptionSnapshot: PrototypeDescriptor
 )

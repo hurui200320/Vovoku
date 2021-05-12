@@ -140,13 +140,15 @@ class AdminApiClient(
         return query(requestBody, picturesEndPoint)
     }
 
-    fun updatePicture(tagId: Int?, tagData: Int): Boolean {
+    fun updatePicture(tagId: Int?, tagData: Int?, forTrain: Boolean?, folderName: String?): Boolean {
         val requestBody = AdminRequest(
             CRUD.UPDATE,
             mutableMapOf<String, Any>()
                 .also { map ->
                     tagId?.let { map[AdminRequest.TAG_ID_KEY] = it }
-                    tagData.let { map[AdminRequest.TAG_DATA_KEY] = it }
+                    tagData?.let { map[AdminRequest.TAG_DATA_KEY] = it }
+                    forTrain?.let { map[AdminRequest.TAG_FOR_TRAIN_KEY] = it }
+                    folderName?.let { map[AdminRequest.TAG_FOLDER_NAME_KEY] = it }
                 }
         )
         return doRequest(requestBody, picturesEndPoint)

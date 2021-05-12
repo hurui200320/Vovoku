@@ -81,7 +81,11 @@ object AdminPictureHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.
             throw BadRequestResponse("Cannot update multiple entity at once")
         }
         val entity = query.first()
-        entity.update(request.typedParameter(AdminRequest.TAG_DATA_KEY))
+        entity.update(
+            request.typedParameter(AdminRequest.TAG_DATA_KEY),
+            request.typedParameter(AdminRequest.TAG_FOR_TRAIN_KEY),
+            request.typedParameter(AdminRequest.TAG_FOLDER_NAME_KEY),
+        )
         ctx.json(entity.toPojo())
     }
 

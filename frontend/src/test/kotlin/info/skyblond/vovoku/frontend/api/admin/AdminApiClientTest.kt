@@ -20,7 +20,7 @@ internal class AdminApiClientTest {
         // print old
         println(
             adminApiClient.queryUser(
-                DatabaseUserPojo(null, "%hu%"),
+                null, "%hu%",
                 Page(1, 20)
             )
         )
@@ -28,21 +28,21 @@ internal class AdminApiClientTest {
         // add new, should success
         println(
             adminApiClient.addUser(
-                DatabaseUserPojo(null, "hurui200320", CryptoUtil.md5("Some password"))
+                "hurui200320", CryptoUtil.md5("Some password")
             )
         )
 
         // add new, should failed
         println(
             adminApiClient.addUser(
-                DatabaseUserPojo(null, "hurui200320", CryptoUtil.md5("Some1 password"))
+                 "hurui200320", CryptoUtil.md5("Some1 password")
             )
         )
 
         // print new
         println(
             adminApiClient.queryUser(
-                DatabaseUserPojo(null, "%hu%"),
+                null, "%hu%",
                 Page(1, 20)
             )
         )
@@ -50,13 +50,13 @@ internal class AdminApiClientTest {
         // delete new
         println(
             adminApiClient.deleteUser(
-                DatabaseUserPojo(null, "hurui200%")
+                null, "hurui200%"
             )
         )
 
         println(
             adminApiClient.queryUser(
-                DatabaseUserPojo(null, "%hu%"),
+                null, "%hu%",
                 Page(1, 20)
             )
         )

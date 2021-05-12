@@ -28,10 +28,10 @@ fun main() {
     println(adminApiClient.queryPicture(null, null, null, Page(1, 20)))
     // upload one pic
     val image = ImageIO.read(File("C:\\Users\\hurui\\Desktop\\imag0173.jpg"))
-    println(userApiClient.pictureApiClient.uploadPic(image, 1))
+    println(userApiClient.pictureApiClient.uploadPic(image, 1, true, "test"))
     println(adminApiClient.queryPicture(null, null, null, Page(1, 20)))
     val fetched = userApiClient.pictureApiClient.fetchPic(
-        userApiClient.pictureApiClient.listPic(1, 20).third.first().filePath!!
+        userApiClient.pictureApiClient.listPic(null, null, 1, 20).third.first().filePath
     )
     ImageIO.write(fetched.third, "png", File("output.png"))
 }

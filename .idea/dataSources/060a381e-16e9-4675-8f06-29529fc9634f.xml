@@ -1416,7 +1416,7 @@ true posix/WET
 false posix/Zulu
 true posixrules
 </TimeZones>
-      <StartupTime>1620566906</StartupTime>
+      <StartupTime>1620797201</StartupTime>
     </root>
     <database id="2" parent="1" name="postgres">
       <ObjectId>13395</ObjectId>
@@ -1432,11 +1432,11 @@ true posixrules
 13111||-9223372036854775808|U|G
 13111||10|U|G</Grants>
       <Owner>postgres</Owner>
-      <IntrospectionStateNumber>517</IntrospectionStateNumber>
+      <IntrospectionStateNumber>11688</IntrospectionStateNumber>
       <Current>1</Current>
       <Relations>sequence|table|16384|16386|1
-sequence|table|16396|16398|1
 sequence|table|16408|16410|1
+sequence|table|24608|24610|1
 </Relations>
     </database>
     <role id="3" parent="1" name="pg_execute_server_program">
@@ -1501,7 +1501,7 @@ sequence|table|16408|16410|1
       <Comment>standard public schema</Comment>
       <StateNumber>287</StateNumber>
       <Owner>postgres</Owner>
-      <IntrospectionStateNumber>518</IntrospectionStateNumber>
+      <IntrospectionStateNumber>11689</IntrospectionStateNumber>
       <Current>1</Current>
     </schema>
     <extension id="17" parent="2" name="plpgsql">
@@ -1608,9 +1608,9 @@ sequence|table|16408|16410|1
       <DataType>integer|0s</DataType>
     </sequence>
     <sequence id="30" parent="16" name="picture_tag_tag_id_seq">
-      <ObjectId>16396</ObjectId>
+      <ObjectId>24608</ObjectId>
       <Owner>postgres</Owner>
-      <StateNumber>493</StateNumber>
+      <StateNumber>11685</StateNumber>
       <DataType>integer|0s</DataType>
     </sequence>
     <sequence id="31" parent="16" name="user_user_id_seq">
@@ -1625,9 +1625,9 @@ sequence|table|16408|16410|1
       <StateNumber>488</StateNumber>
     </table>
     <table id="33" parent="16" name="picture_tag">
-      <ObjectId>16398</ObjectId>
+      <ObjectId>24610</ObjectId>
       <Owner>postgres</Owner>
-      <StateNumber>516</StateNumber>
+      <StateNumber>11685</StateNumber>
     </table>
     <table id="34" parent="16" name="user">
       <ObjectId>16410</ObjectId>
@@ -1699,7 +1699,7 @@ sequence|table|16408|16410|1
       <Position>1</Position>
       <DataType>integer|0s</DataType>
       <NotNull>1</NotNull>
-      <StateNumber>493</StateNumber>
+      <StateNumber>11685</StateNumber>
       <DefaultExpression>nextval(&apos;picture_tag_tag_id_seq&apos;::regclass)</DefaultExpression>
       <TypeId>23</TypeId>
     </column>
@@ -1707,26 +1707,40 @@ sequence|table|16408|16410|1
       <Position>2</Position>
       <DataType>text|0s</DataType>
       <NotNull>1</NotNull>
-      <StateNumber>493</StateNumber>
+      <StateNumber>11685</StateNumber>
       <TypeId>25</TypeId>
     </column>
     <column id="45" parent="33" name="user_id">
       <Position>3</Position>
       <DataType>integer|0s</DataType>
       <NotNull>1</NotNull>
-      <StateNumber>493</StateNumber>
+      <StateNumber>11685</StateNumber>
       <TypeId>23</TypeId>
     </column>
     <column id="46" parent="33" name="tag_data">
       <Position>4</Position>
       <DataType>json|0s</DataType>
       <NotNull>1</NotNull>
-      <StateNumber>493</StateNumber>
+      <StateNumber>11685</StateNumber>
       <TypeId>114</TypeId>
     </column>
-    <index id="47" parent="33" name="picture_tag_pk">
-      <ObjectId>16406</ObjectId>
-      <StateNumber>516</StateNumber>
+    <column id="47" parent="33" name="used_for_train">
+      <Position>5</Position>
+      <DataType>boolean|0s</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>11685</StateNumber>
+      <TypeId>16</TypeId>
+    </column>
+    <column id="48" parent="33" name="folder_name">
+      <Position>6</Position>
+      <DataType>text|0s</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>11685</StateNumber>
+      <TypeId>25</TypeId>
+    </column>
+    <index id="49" parent="33" name="picture_tag_pk">
+      <ObjectId>24618</ObjectId>
+      <StateNumber>11687</StateNumber>
       <ColNames>tag_id</ColNames>
       <Unique>1</Unique>
       <Primary>1</Primary>
@@ -1734,23 +1748,23 @@ sequence|table|16408|16410|1
       <CollationIds>0</CollationIds>
       <ClassIds>1978</ClassIds>
     </index>
-    <index id="48" parent="33" name="picture_tag_tag_id_uindex">
-      <ObjectId>16405</ObjectId>
-      <StateNumber>516</StateNumber>
+    <index id="50" parent="33" name="picture_tag_tag_id_uindex">
+      <ObjectId>24617</ObjectId>
+      <StateNumber>11686</StateNumber>
       <ColNames>tag_id</ColNames>
       <Unique>1</Unique>
       <AccessMethodId>403</AccessMethodId>
       <CollationIds>0</CollationIds>
       <ClassIds>1978</ClassIds>
     </index>
-    <key id="49" parent="33" name="picture_tag_pk">
-      <ObjectId>16407</ObjectId>
-      <StateNumber>495</StateNumber>
+    <key id="51" parent="33" name="picture_tag_pk">
+      <ObjectId>24619</ObjectId>
+      <StateNumber>11687</StateNumber>
       <ColNames>tag_id</ColNames>
       <Primary>1</Primary>
       <UnderlyingIndexName>picture_tag_pk</UnderlyingIndexName>
     </key>
-    <column id="50" parent="34" name="user_id">
+    <column id="52" parent="34" name="user_id">
       <Position>1</Position>
       <DataType>integer|0s</DataType>
       <NotNull>1</NotNull>
@@ -1758,21 +1772,21 @@ sequence|table|16408|16410|1
       <DefaultExpression>nextval(&apos;user_user_id_seq&apos;::regclass)</DefaultExpression>
       <TypeId>23</TypeId>
     </column>
-    <column id="51" parent="34" name="username">
+    <column id="53" parent="34" name="username">
       <Position>2</Position>
       <DataType>varchar(50)|0s</DataType>
       <NotNull>1</NotNull>
       <StateNumber>498</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <column id="52" parent="34" name="password">
+    <column id="54" parent="34" name="password">
       <Position>3</Position>
       <DataType>varchar(50)|0s</DataType>
       <NotNull>1</NotNull>
       <StateNumber>498</StateNumber>
       <TypeId>1043</TypeId>
     </column>
-    <index id="53" parent="34" name="user_pk">
+    <index id="55" parent="34" name="user_pk">
       <ObjectId>16414</ObjectId>
       <StateNumber>498</StateNumber>
       <ColNames>user_id</ColNames>
@@ -1782,7 +1796,7 @@ sequence|table|16408|16410|1
       <CollationIds>0</CollationIds>
       <ClassIds>1978</ClassIds>
     </index>
-    <index id="54" parent="34" name="user_user_id_uindex">
+    <index id="56" parent="34" name="user_user_id_uindex">
       <ObjectId>16416</ObjectId>
       <StateNumber>500</StateNumber>
       <ColNames>user_id</ColNames>
@@ -1791,7 +1805,7 @@ sequence|table|16408|16410|1
       <CollationIds>0</CollationIds>
       <ClassIds>1978</ClassIds>
     </index>
-    <index id="55" parent="34" name="user_username_uindex">
+    <index id="57" parent="34" name="user_username_uindex">
       <ObjectId>16417</ObjectId>
       <StateNumber>501</StateNumber>
       <ColNames>username</ColNames>
@@ -1801,7 +1815,7 @@ sequence|table|16408|16410|1
       <CollationNames>default</CollationNames>
       <ClassIds>3126</ClassIds>
     </index>
-    <key id="56" parent="34" name="user_pk">
+    <key id="58" parent="34" name="user_pk">
       <ObjectId>16415</ObjectId>
       <StateNumber>498</StateNumber>
       <ColNames>user_id</ColNames>

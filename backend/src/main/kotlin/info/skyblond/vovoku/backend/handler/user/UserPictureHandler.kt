@@ -7,11 +7,9 @@ import info.skyblond.vovoku.backend.database.PictureTags
 import info.skyblond.vovoku.backend.handler.getPage
 import info.skyblond.vovoku.backend.handler.getUserId
 import info.skyblond.vovoku.commons.FilePathUtil
-import info.skyblond.vovoku.commons.models.Page
 import info.skyblond.vovoku.commons.models.PictureTagEntry
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.Handler
-import io.javalin.http.InternalServerErrorResponse
 import io.javalin.http.NotFoundResponse
 import org.ktorm.dsl.and
 import org.ktorm.dsl.eq
@@ -27,15 +25,15 @@ object UserPictureHandler {
     val updateTagNumberHandler = Handler { ctx ->
         val userId = ctx.getUserId()
         val tagId = ctx.pathParam<Int>("picTagId").get()
-        val newTag = ctx.formParam<Int>("newTag").check({ it in 0..9 }).get()
+        val newTag = ctx.formParam<Int>("newTag").check({ it in 0..9 }).getOrNull()
+        val usedForTrain = ctx.formParam<Boolean>("train").getOrNull()
+        val datasetName = ctx.formParam<String>("folder").getOrNull()
 
         val entity = database.sequenceOf(PictureTags)
             .find { (it.userId eq userId) and (it.tagId eq tagId) }
             .let { it ?: throw  NotFoundResponse("Pic not found") }
 
-        entity.tagData = entity.tagData.copy(tag = newTag)
-        entity.flushChanges()
-
+        entity.update(newTag, usedForTrain, datasetName)
         ctx.json(entity.toPojo(ctx))
     }
 
@@ -71,6 +69,8 @@ object UserPictureHandler {
         val height = ctx.formParam<Int>("height").check({ it > 0 }).get()
         val channelCount = ctx.formParam<Int>("channel").check({ it > 0 }).get()
         val tag = ctx.formParam<Int>("tag").check({ it in 0..9 }).get()
+        val usedForTrain = ctx.formParam<Boolean>("train").get()
+        val datasetName = ctx.formParam<String>("folder").get()
         val file = try {
             ctx.uploadedFile("data") ?: throw BadRequestResponse("Upload data is required")
         } catch (e: Exception) {
@@ -101,6 +101,8 @@ object UserPictureHandler {
             this.filePath = filePath
             this.userId = userId
             this.tagData = tagEntry
+            this.usedForTrain = usedForTrain
+            this.folderName = datasetName
         }
         database.sequenceOf(PictureTags)
             .add(entity)
@@ -111,8 +113,25 @@ object UserPictureHandler {
         val userId = ctx.getUserId()
         val page = ctx.getPage()
 
+        val usedForTrain = ctx.queryParam<Boolean>("train").getOrNull()
+        val datasetName = ctx.queryParam<String>("folder").getOrNull()
+
         ctx.json(database.sequenceOf(PictureTags)
             .filter { it.userId eq userId }
+            .let { sequence ->
+                if (usedForTrain != null) {
+                    sequence.filter { it.usedForTrain eq usedForTrain }
+                } else {
+                    sequence
+                }
+            }
+            .let { sequence ->
+                if (datasetName != null) {
+                    sequence.filter { it.folderName eq datasetName }
+                } else {
+                    sequence
+                }
+            }
             .sortedBy { it.tagId }
             .drop(page.offset)
             .take(page.limit)
