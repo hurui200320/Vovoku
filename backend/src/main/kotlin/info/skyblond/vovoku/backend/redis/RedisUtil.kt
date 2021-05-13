@@ -1,20 +1,26 @@
 package info.skyblond.vovoku.backend.redis
 
 import info.skyblond.vovoku.backend.config.ConfigUtil
+import info.skyblond.vovoku.backend.database.DatabaseUtil
+import info.skyblond.vovoku.backend.database.ModelInfo
+import info.skyblond.vovoku.backend.database.ModelInfos
 import info.skyblond.vovoku.commons.JacksonJsonUtil
 import info.skyblond.vovoku.commons.RedisTaskDistributionChannel
 import info.skyblond.vovoku.commons.RedisTaskReportChannel
 import info.skyblond.vovoku.commons.RedisTokenToUserPrefix
-import info.skyblond.vovoku.commons.dl4j.ModelPrototype
-import info.skyblond.vovoku.commons.dl4j.Updater
 import info.skyblond.vovoku.commons.models.ModelTrainingParameter
+import info.skyblond.vovoku.commons.models.ModelTrainingStatus
 import info.skyblond.vovoku.commons.models.TrainingTaskDistro
+import info.skyblond.vovoku.commons.models.TrainingTaskReport
+import org.ktorm.dsl.eq
+import org.ktorm.entity.find
+import org.ktorm.entity.sequenceOf
 import org.slf4j.LoggerFactory
+import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPool
 import redis.clients.jedis.JedisPoolConfig
 import redis.clients.jedis.JedisPubSub
 import java.time.Duration
-import kotlin.random.Random
 
 object RedisUtil : AutoCloseable {
     private val logger = LoggerFactory.getLogger(RedisUtil::class.java)
@@ -24,8 +30,40 @@ object RedisUtil : AutoCloseable {
 
     private val jedisTaskReportSub = object : JedisPubSub() {
         override fun onMessage(channel: String?, message: String?) {
-//                logger.info("Get message from channel $channel: $message")
-            // TODO with message
+            logger.info("Get message from $channel: $message")
+            if (message == null)
+                return
+
+            val report = JacksonJsonUtil.jsonToObject<TrainingTaskReport>(message)
+
+            val model = DatabaseUtil.database.sequenceOf(ModelInfos)
+                .find { it.modelId eq report.taskId }
+
+            if (model == null) {
+                logger.error("Cannot find model with id ${report.taskId}")
+                return
+            }
+
+            if (report.success) {
+                model.addTrainingStatus(
+                    ModelTrainingStatus.FINISHED,
+                    "training finished: ${report.message}\n" +
+                            "evaluateStatus: ${report.evaluateStatus}\n" +
+                            "evaluateAccuracy: ${report.evaluateAccuracy}\n" +
+                            "evaluatePrecision: ${report.evaluatePrecision}\n" +
+                            "evaluateRecall: ${report.evaluateRecall}\n" +
+                            "rocStatus: ${report.rocStatus}\n" +
+                            "rocValue: ${report.rocValue}\n"
+                )
+                model.lastStatus = ModelTrainingStatus.FINISHED.name
+            } else {
+                model.addTrainingStatus(
+                    ModelTrainingStatus.ERROR,
+                    "training error: ${report.message}"
+                )
+                model.lastStatus = ModelTrainingStatus.ERROR.name
+            }
+            model.flushChanges()
         }
     }
 
@@ -74,36 +112,49 @@ object RedisUtil : AutoCloseable {
         }
     }
 
-    fun publishTrainingTask() {
-        jedisPool.resource.use {
+    fun <T> useJedis(block: (Jedis) -> T): T {
+        return jedisPool.resource.use(block)
+    }
+
+
+    fun queryLock(key: String): Boolean {
+        return jedisPool.resource.use { jedis ->
+            jedis.get(key) != null
+        }
+    }
+
+    fun publishTrainingTask(model: ModelInfo): Long {
+        val result =  jedisPool.resource.use {
             it.publish(
                 RedisTaskDistributionChannel,
                 JacksonJsonUtil.objectToJson(
                     TrainingTaskDistro(
-                        Random.nextInt(),
+                        model.modelId,
                         ModelTrainingParameter(
-                            ModelPrototype.MNIST_MLP_NAME,
-                            128,
-                            3,
-                            intArrayOf(28, 28),
-                            intArrayOf(10),
-                            Updater.Nesterovs,
-                            doubleArrayOf(0.1, 0.9),
-                            doubleArrayOf(1e-4, 1000.0),
-                            123L
+                            model.createInfo.trainingParameter.modelIdentifier,
+                            model.createInfo.trainingParameter.batchSize,
+                            model.createInfo.trainingParameter.epochs,
+                            model.createInfo.trainingParameter.inputSize,
+                            model.createInfo.trainingParameter.outputSize,
+                            model.createInfo.trainingParameter.updater,
+                            model.createInfo.trainingParameter.updaterParameters,
+                            model.createInfo.trainingParameter.networkParameter,
+                            model.createInfo.trainingParameter.seed
                         ),
-                        "file://D:\\Git\\github\\Vovoku\\worker\\train_image_byte.bin",
-                        "file://D:\\Git\\github\\Vovoku\\worker\\train_label_byte.bin",
-                        60000,
-                        "file://D:\\Git\\github\\Vovoku\\worker\\test_image_byte.bin",
-                        "file://D:\\Git\\github\\Vovoku\\worker\\test_label_byte.bin",
-                        10000,
-                        "file://D:\\Git\\github\\Vovoku\\test.model"
+                        "file://${model.getTrainingDataFile().canonicalPath}",
+                        "file://${model.getTrainingLabelFile().canonicalPath}",
+                        model.createInfo.trainingPics.size,
+                        "file://${model.getTestingDataFile().canonicalPath}",
+                        "file://${model.getTestingLabelFile().canonicalPath}",
+                        model.createInfo.testingPics.size,
+                        "file://${model.getModelFile().canonicalPath}"
                     )
                 )
             )
         }
-        TODO()
+        model.filePath = "file://${model.getModelFile().canonicalPath}"
+        model.flushChanges()
+        return result
     }
 
     override fun close() {

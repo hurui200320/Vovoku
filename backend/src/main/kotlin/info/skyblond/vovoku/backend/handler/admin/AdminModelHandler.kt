@@ -11,7 +11,6 @@ import io.javalin.http.Context
 import org.ktorm.dsl.eq
 import org.ktorm.entity.*
 import org.slf4j.LoggerFactory
-import java.sql.Timestamp
 
 object AdminModelHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.java) {
     private val logger = LoggerFactory.getLogger(AdminModelHandler::class.java)
@@ -21,6 +20,7 @@ object AdminModelHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.ja
         modelId: Int?,
         userId: Int?,
         filePath: String?,
+        lastStatus: String?,
         page: Page?
     ): EntitySequence<ModelInfo, ModelInfos> {
         return database.sequenceOf(ModelInfos)
@@ -45,6 +45,13 @@ object AdminModelHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.ja
                     sequence
                 }
             }
+            .let { sequence ->
+                if (lastStatus != null) {
+                    sequence.filter { it.lastStatus eq lastStatus }
+                } else {
+                    sequence
+                }
+            }
             .sortedBy { it.modelId }
             .let {
                 if (page != null) {
@@ -65,6 +72,7 @@ object AdminModelHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.ja
             request.typedParameter(AdminRequest.MODEL_ID_KEY),
             request.typedParameter(AdminRequest.USER_ID_KEY),
             request.typedParameter(AdminRequest.FILE_PATH_KEY),
+            request.typedParameter(AdminRequest.MODEL_LAST_STATUS_KEY),
             request.page
         ).map { it.toPojo() }
         ctx.json(result)
@@ -76,7 +84,7 @@ object AdminModelHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.ja
     override fun handleUpdate(ctx: Context, request: AdminRequest) {
         val query = query(
             request.typedParameter(AdminRequest.MODEL_ID_KEY),
-            null, null,
+            null, null, null,
             null
         )
         if (query.totalRecords != 1) {
@@ -84,11 +92,11 @@ object AdminModelHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.ja
         }
         // only terminate training
         val entity = query.first()
-        entity.trainingInfo.statusList.let {
+        entity.trainingInfo.let {
             if (it.lastOrNull()?.first == ModelTrainingStatus.TERMINATED)
                 throw BadRequestResponse("Cannot terminate a terminated task")
-            it.add(
-                Triple(ModelTrainingStatus.TERMINATED, Timestamp(System.currentTimeMillis()), "Terminated by admin")
+            entity.addTrainingStatus(
+                ModelTrainingStatus.TERMINATED, "Terminated by admin"
             )
         }
         entity.flushChanges()
@@ -100,6 +108,7 @@ object AdminModelHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.ja
             request.typedParameter(AdminRequest.MODEL_ID_KEY),
             request.typedParameter(AdminRequest.USER_ID_KEY),
             request.typedParameter(AdminRequest.FILE_PATH_KEY),
+            request.typedParameter(AdminRequest.MODEL_LAST_STATUS_KEY),
             null
         )
             .map {

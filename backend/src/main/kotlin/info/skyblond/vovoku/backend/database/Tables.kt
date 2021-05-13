@@ -1,10 +1,11 @@
 package info.skyblond.vovoku.backend.database
 
 import info.skyblond.vovoku.commons.models.ModelCreateInfo
-import info.skyblond.vovoku.commons.models.ModelTrainingInfo
+import info.skyblond.vovoku.commons.models.ModelTrainingStatus
 import info.skyblond.vovoku.commons.models.PictureTagEntry
 import org.ktorm.jackson.json
 import org.ktorm.schema.*
+import java.sql.Timestamp
 
 object Users : Table<User>("user") {
     val userId = int("user_id").primaryKey().bindTo { it.userId }
@@ -26,5 +27,6 @@ object ModelInfos : Table<ModelInfo>("model_info") {
     val filePath = text("file_path").bindTo { it.filePath }
     val userId = int("user_id").bindTo { it.userId }
     val createInfo = json<ModelCreateInfo>("create_info").bindTo { it.createInfo }
-    val trainingInfo = json<ModelTrainingInfo>("training_info").bindTo { it.trainingInfo }
+    val trainingInfo = json<Array<Triple<ModelTrainingStatus, Timestamp, String>>>("training_info").bindTo { it.trainingInfo }
+    val lastStatus = text("last_status").bindTo { it.lastStatus }
 }

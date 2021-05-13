@@ -16,7 +16,7 @@ class MnistUpload {
         println(userApiClient.accountApiClient.whoAmI())
         val datasetName = "mnist"
 
-        // TODO upload testing data
+        // TODO backend upload mnist data set
         val usedForTrain = true
         val baseDir = File("D:\\Vovoku dataset\\train")
 //        val usedForTrain = false

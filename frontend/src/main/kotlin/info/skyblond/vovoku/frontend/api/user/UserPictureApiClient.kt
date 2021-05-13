@@ -95,7 +95,6 @@ class UserPictureApiClient internal constructor(
         }
     }
 
-    // TODO upload pic, convert pic to ubyte first
     fun uploadPic(
         image: BufferedImage,
         tag: Int,

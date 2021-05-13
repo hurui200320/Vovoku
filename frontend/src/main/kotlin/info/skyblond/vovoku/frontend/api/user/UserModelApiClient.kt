@@ -3,6 +3,7 @@ package info.skyblond.vovoku.frontend.api.user
 import info.skyblond.vovoku.commons.JacksonJsonUtil
 import info.skyblond.vovoku.commons.UBytePicUtil
 import info.skyblond.vovoku.commons.models.DatabaseModelInfoPojo
+import info.skyblond.vovoku.commons.models.ModelTrainingStatus
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.slf4j.LoggerFactory
@@ -27,12 +28,14 @@ class UserModelApiClient internal constructor(
         TODO()
     }
 
-    fun listModel(page: Int, size: Int): Triple<Boolean, String, Array<DatabaseModelInfoPojo>>{
+    fun listModel(lastStatus: ModelTrainingStatus?, page: Int, size: Int): Triple<Boolean, String, Array<DatabaseModelInfoPojo>>{
         val response = apiClient.doGet(
-            urlPrefix, mapOf(
+            urlPrefix, mutableMapOf<String, Any>(
                 "page" to page,
                 "size" to size
-            )
+            ).apply {
+                lastStatus?.let { put("lastStatus", it.name) }
+            }
         )
         return if (response.first == 200) {
             Triple(true, "OK", JacksonJsonUtil.jsonToObject(response.second))

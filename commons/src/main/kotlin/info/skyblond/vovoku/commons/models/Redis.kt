@@ -10,7 +10,7 @@ data class ModelTrainingParameter(
     val inputSize: IntArray,
     val outputSize: IntArray,
     val updater: Updater,
-    val updateParameters: DoubleArray,
+    val updaterParameters: DoubleArray,
     val networkParameter: DoubleArray,
     val seed: Long
 ) {
@@ -26,7 +26,7 @@ data class ModelTrainingParameter(
         if (!inputSize.contentEquals(other.inputSize)) return false
         if (!outputSize.contentEquals(other.outputSize)) return false
         if (updater != other.updater) return false
-        if (!updateParameters.contentEquals(other.updateParameters)) return false
+        if (!updaterParameters.contentEquals(other.updaterParameters)) return false
         if (!networkParameter.contentEquals(other.networkParameter)) return false
         if (seed != other.seed) return false
 
@@ -40,7 +40,7 @@ data class ModelTrainingParameter(
         result = 31 * result + inputSize.contentHashCode()
         result = 31 * result + outputSize.contentHashCode()
         result = 31 * result + updater.hashCode()
-        result = 31 * result + updateParameters.contentHashCode()
+        result = 31 * result + updaterParameters.contentHashCode()
         result = 31 * result + networkParameter.contentHashCode()
         result = 31 * result + seed.hashCode()
         return result

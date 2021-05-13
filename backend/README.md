@@ -104,7 +104,8 @@ create table model_info
     file_path     text,
     user_id       int    not null,
     create_info   json   not null,
-    training_info json   not null
+    training_info json   not null,
+    last_status   int    not null
 );
 
 create unique index model_info_model_id_uindex

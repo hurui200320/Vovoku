@@ -13,7 +13,8 @@ enum class ModelTrainingStatus {
     INITIALIZING,
 
     /**
-     * Pushing data to redis and waiting worker to claim.
+     * Data is good. Ready or already being pushed to redis and
+     * waiting worker to claim.
      * */
     DISTRIBUTING,
 
@@ -63,9 +64,7 @@ data class ModelCreateInfo(
     val prototypeDescriptionSnapshot: PrototypeDescriptor
 )
 
-data class ModelTrainingInfo(
-    /**
-     * List of training status. Triple: Status, time and message.
-     * */
-    val statusList: MutableList<Triple<ModelTrainingStatus, Timestamp, String>> = mutableListOf()
+data class ModelCreateRequest(
+    val trainingParameter: ModelTrainingParameter,
+    val datasetName: String
 )

@@ -8,7 +8,7 @@ import javax.imageio.ImageIO
 class UByteToPic {
     @Test
     fun run() {
-        // TODO gz is not supported
+        // *.gz is not supported
         val imageDataFile =
             RandomAccessFile(File("C:\\Users\\天空Blond\\Downloads\\Compressed\\train-images.idx3-ubyte"), "r")
         val labelDataFile =

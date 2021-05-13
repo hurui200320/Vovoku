@@ -8,6 +8,7 @@ import org.nd4j.linalg.dataset.api.iterator.fetcher.BaseDataFetcher
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.indexing.NDArrayIndex
 import java.io.ByteArrayInputStream
+import java.io.DataInputStream
 import java.util.*
 
 class MnistMLPDataFetcher(
@@ -49,11 +50,10 @@ class MnistMLPDataFetcher(
         }
 
         // init label data
-        val labelByteInputStream = ByteArrayInputStream(labelsByteData)
+        val labelByteInputStream = DataInputStream(ByteArrayInputStream(labelsByteData))
         labelArray = IntArray(numExamples) { 0 }
         for (i in 0 until numExamples) {
-            labelArray[i] = labelByteInputStream.read()
-            require(labelArray[i] >= 0) { "Unexpected EOF" }
+            labelArray[i] = labelByteInputStream.readInt()
         }
 
         reset() //Shuffle order

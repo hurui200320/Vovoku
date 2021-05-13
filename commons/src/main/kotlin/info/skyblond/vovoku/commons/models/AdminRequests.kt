@@ -51,6 +51,7 @@ data class AdminRequest(
         const val TAG_FOLDER_NAME_KEY = "tagFolderName"
 
         const val MODEL_ID_KEY = "modelID"
+        const val MODEL_LAST_STATUS_KEY = "modelLastStatus"
 
         const val FILE_PATH_KEY = "filePath"
         const val FILE_TYPE_KEY = "fileType"

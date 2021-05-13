@@ -18,6 +18,8 @@ import redis.clients.jedis.JedisPoolConfig
 import redis.clients.jedis.JedisPubSub
 import java.io.File
 import java.time.Duration
+import kotlin.math.max
+import kotlin.math.min
 
 fun main() {
     val logger = LoggerFactory.getLogger("Worker")
@@ -94,7 +96,7 @@ fun main() {
             // sleep 5s for next query
             Thread.sleep(5 * 1000)
         }
-
+        val startTime = System.currentTimeMillis()
         jedisPool.resource.use { jedis ->
             try {
                 logger.info("Start training task: ${currentTask!!.taskId}")
@@ -106,9 +108,17 @@ fun main() {
                 val trainFetcher = prototype.dataFetcherFactory.getDataFetcher(
                     DataFetcherParameter(
                         FilePathUtil.readFromFilePath(currentTask!!.trainingDataBytePath)
-                            .readBytes(),
+                            .let {
+                                val result = it.readBytes()
+                                it.close()
+                                result
+                            },
                         FilePathUtil.readFromFilePath(currentTask!!.trainingLabelBytePath)
-                            .readBytes(),
+                            .let {
+                                val result = it.readBytes()
+                                it.close()
+                                result
+                            },
                         trainingParameter.inputSize, trainingParameter.outputSize,
                         currentTask!!.trainingSamplesCount, trainingParameter.seed
                     )
@@ -123,9 +133,17 @@ fun main() {
                 val testFetcher = prototype.dataFetcherFactory.getDataFetcher(
                     DataFetcherParameter(
                         FilePathUtil.readFromFilePath(currentTask!!.testDataBytePath)
-                            .readBytes(),
+                            .let {
+                                val result = it.readBytes()
+                                it.close()
+                                result
+                            },
                         FilePathUtil.readFromFilePath(currentTask!!.testLabelBytePath)
-                            .readBytes(),
+                            .let {
+                                val result = it.readBytes()
+                                it.close()
+                                result
+                            },
                         trainingParameter.inputSize, trainingParameter.outputSize,
                         currentTask!!.testSamplesCount, trainingParameter.seed
                     )
@@ -142,7 +160,7 @@ fun main() {
                         prototype.getModelInputSizeFromDataInputSize(trainingParameter.inputSize),
                         prototype.getModelOutputSizeFromLabelSize(trainingParameter.outputSize),
                         trainingParameter.updater,
-                        trainingParameter.updateParameters,
+                        trainingParameter.updaterParameters,
                         trainingParameter.networkParameter,
                         trainingParameter.seed
                     )
@@ -175,6 +193,9 @@ fun main() {
                 output.write(temp.readBytes())
                 output.close()
                 temp.delete()
+
+                // 训练时间太短，硬等一分钟
+                Thread.sleep(max(1, 60 * 1000 + startTime - System.currentTimeMillis()))
 
                 jedis.publish(
                     RedisTaskReportChannel, JacksonJsonUtil.objectToJson(report)

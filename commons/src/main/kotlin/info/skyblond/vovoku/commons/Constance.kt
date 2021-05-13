@@ -17,6 +17,11 @@ const val RedisTaskReportChannel = "taskReport"
 const val RedisTaskLockKeyPrefix = "task."
 
 /**
+ * Redis lock prefix for backend locking a model to generate file
+ * */
+const val RedisDataGenerationLockKeyPrefix = "dataGeneration."
+
+/**
  * Redis key prefix for backend storing token info.
  * Token -> UserId
  * */

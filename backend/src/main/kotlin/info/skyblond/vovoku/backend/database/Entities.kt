@@ -1,9 +1,13 @@
 package info.skyblond.vovoku.backend.database
 
+import info.skyblond.vovoku.backend.config.ConfigUtil
 import info.skyblond.vovoku.backend.handler.user.UserFileHandler
 import info.skyblond.vovoku.commons.models.*
 import io.javalin.http.Context
 import org.ktorm.entity.Entity
+import java.io.File
+import java.sql.Timestamp
+import java.time.Instant
 
 interface User : Entity<User> {
     companion object : Entity.Factory<User>()
@@ -67,13 +71,19 @@ interface ModelInfo : Entity<ModelInfo> {
 
     val modelId: Int
     var filePath: String?
-    val userId: Int
-    val createInfo: ModelCreateInfo
-    val trainingInfo: ModelTrainingInfo
+    var userId: Int
+    var createInfo: ModelCreateInfo
+    var trainingInfo: Array<Triple<ModelTrainingStatus, Timestamp, String>>
+    var lastStatus: String
 
-    // TODO Admin api?
+    fun addTrainingStatus(status: ModelTrainingStatus, message: String) {
+        synchronized(modelId) {
+            trainingInfo = arrayOf(*trainingInfo, Triple(status, Timestamp.from(Instant.now()), message))
+        }
+    }
+
     fun toPojo(): DatabaseModelInfoPojo = DatabaseModelInfoPojo(
-        modelId, filePath, userId, createInfo, trainingInfo
+        modelId, filePath, userId, createInfo, trainingInfo, lastStatus
     )
 
     fun toPojo(ctx: Context): DatabaseModelInfoPojo = DatabaseModelInfoPojo(
@@ -81,6 +91,37 @@ interface ModelInfo : Entity<ModelInfo> {
         ctx.url().removeSuffix(ctx.path()) + UserFileHandler.MODEL_HANDLER_PATH + modelId,
         userId,
         createInfo,
-        trainingInfo
+        trainingInfo,
+        lastStatus
     )
+
+    fun getTrainingDataFile(): File {
+        var baseDir = File(ConfigUtil.modelBaseDir, userId.toString())
+        baseDir = File(baseDir, modelId.toString()).also { it.mkdirs() }
+        return File(baseDir, "train_data_ubyte.bin")
+    }
+
+    fun getTrainingLabelFile(): File {
+        var baseDir = File(ConfigUtil.modelBaseDir, userId.toString())
+        baseDir = File(baseDir, modelId.toString()).also { it.mkdirs() }
+        return File(baseDir, "train_label_ubyte.bin")
+    }
+
+    fun getTestingDataFile(): File {
+        var baseDir = File(ConfigUtil.modelBaseDir, userId.toString())
+        baseDir = File(baseDir, modelId.toString()).also { it.mkdirs() }
+        return File(baseDir, "test_data_ubyte.bin")
+    }
+
+    fun getTestingLabelFile(): File {
+        var baseDir = File(ConfigUtil.modelBaseDir, userId.toString())
+        baseDir = File(baseDir, modelId.toString()).also { it.mkdirs() }
+        return File(baseDir, "test_label_ubyte.bin")
+    }
+
+    fun getModelFile(): File {
+        var baseDir = File(ConfigUtil.modelBaseDir, userId.toString())
+        baseDir = File(baseDir, modelId.toString()).also { it.mkdirs() }
+        return File(baseDir, "model.zip")
+    }
 }

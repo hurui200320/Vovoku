@@ -168,7 +168,7 @@ class AdminApiClient(
     }
 
 
-    fun queryModel(modelId: Int?, userId: Int?, filePath: String?, page: Page): List<DatabaseModelInfoPojo> {
+    fun queryModel(modelId: Int?, userId: Int?, filePath: String?, lastStatus: ModelTrainingStatus?, page: Page): List<DatabaseModelInfoPojo> {
         val requestBody = AdminRequest(
             CRUD.READ,
             mutableMapOf<String, Any>()
@@ -176,6 +176,7 @@ class AdminApiClient(
                     modelId?.let { map[AdminRequest.MODEL_ID_KEY] = it }
                     userId?.let { map[AdminRequest.USER_ID_KEY] = it }
                     filePath?.let { map[AdminRequest.FILE_PATH_KEY] = it }
+                    lastStatus?.let { map[AdminRequest.MODEL_LAST_STATUS_KEY] = it.name }
                 },
             page
         )
@@ -193,7 +194,7 @@ class AdminApiClient(
         return doRequest(requestBody, modelsEndPoint)
     }
 
-    fun deleteModel(modelId: Int?, userId: Int?, filePath: String?): Boolean {
+    fun deleteModel(modelId: Int?, userId: Int?, filePath: String?, lastStatus: ModelTrainingStatus?): Boolean {
         val requestBody = AdminRequest(
             CRUD.DELETE,
             mutableMapOf<String, Any>()
@@ -201,6 +202,7 @@ class AdminApiClient(
                     modelId?.let { map[AdminRequest.MODEL_ID_KEY] = it }
                     userId?.let { map[AdminRequest.USER_ID_KEY] = it }
                     filePath?.let { map[AdminRequest.FILE_PATH_KEY] = it }
+                    lastStatus?.let { map[AdminRequest.MODEL_LAST_STATUS_KEY] = it.name }
                 }
         )
         return doRequest(requestBody, modelsEndPoint)
