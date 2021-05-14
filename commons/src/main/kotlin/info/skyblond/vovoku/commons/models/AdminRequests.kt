@@ -61,9 +61,3 @@ data class AdminRequest(
     }
 
 }
-
-data class AdminModelRequest(
-    val pojo: DatabaseModelInfoPojo,
-    override val operation: CRUD,
-    val page: Page? = null,
-) : AdminCRUDRequest

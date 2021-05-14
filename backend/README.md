@@ -13,15 +13,13 @@
 
 普通用户使用用户名密码登录，服务端签发Token，通过Token调用API。
 
-图片上传到某路径下，每用户一个文件夹，文件名对应数据库中全局唯一的主键。文件名生成：用户ID、当前时间戳、文件Hash 标定数据在数据库中每条一个数据。
+上传图片将会被存储到本地文件系统，但可灵活拓展到其他存储上，例如亚马逊S3或阿里云OSS等，模型数据类似。
 
-模型数据类似，每用户一个文件夹，每个模型一个zip文件，DL4J格式。文件名：用户ID、时间戳。 模型在数据库中存储创建时的信息，时间、训练参数等。
-
-### 特权用户 - Done
+### 特权用户
 
 系统管理功能，能够查询所有用户的数据。
 
-特权用户需要对请求体进行签名进行鉴权。
+特权用户需要对请求体进行签名进行鉴权，详见后续超控接口说明。
 
 特权用户仅提供基础的管理功能，诸如图片、用户、模型管理（增删改查），不提供图片上传、模型训练等功能。
 
@@ -29,16 +27,9 @@
 
 读取YAML文件作为环境配置
 
-## 数据库实体
+## 数据库设计
 
 ### User
-
-| 用户ID | 用户名 | 密码 | 
-| :----: | :----: | :----: |
-| integer  | varchar(50) | varchar(50) |
-| 非空、主键、唯一、自增  | 唯一、非空 | 非空 |
-
-初始化SQL：
 
 ```sql
 create table "user"
@@ -62,22 +53,15 @@ create unique index user_username_uindex
 
 ### PictureTag
 
-| TagID | FilePath | 所属用户Id | 标定数据 | 
-| :----: | :----: | :----: | :----: |
-| integer  | json | integer | json |
-| 非空、主键、唯一、自增  | 非空 | 非空 | 非空 |
-
-初始化SQL：
-
 ```sql
 create table picture_tag
 (
-    tag_id    serial not null,
-    file_path text   not null,
-    user_id   int    not null,
-    tag_data  json   not null,
+    tag_id          serial not null,
+    file_path       text   not null,
+    user_id         int    not null,
+    tag_data        json   not null,
     used_for_train  bool   not null,
-    folder_name  text   not null
+    folder_name     text   not null
 );
 
 create unique index picture_tag_tag_id_uindex
@@ -89,13 +73,6 @@ alter table picture_tag
 ```
 
 ### ModelInfo
-
-| ModelID | FilePath | 所属用户Id | 创建信息 | 训练状态 |
-| :----: | :----: | :----: | :----: | :----: |
-| integer  | text | integer | json | json |
-| 非空、主键、唯一、自增  |  | 非空 | 非空 | 非空 |
-
-初始化SQL：
 
 ```sql
 create table model_info
@@ -118,7 +95,96 @@ alter table model_info
 
 ## API说明
 
-API遵循REST规范：GET为无副作用获取数据，POST为有副作用地创建新的资源，PUT用于无副作用的修改已有数据，DELETE用于删除。
+TODO - 尚未完工
+
+### 公开接口
+
+`/public`
+
+#### token
+
+`POST /public/token`
+
+表单：
+
++ `username` 登录使用的用户名
++ `password` 登录使用的密码摘要，由密码经过一次MD5运算得到
+
+返回：
+
++ 200 - 内容即为Token
++ 401 - 凭据不正确
+
+用途：
+
+除了公开接口外，所有发送到用户接口的请求都必须在请求头`Authorization`中附带有效的Token。Token有效期15分钟，每一次成功访问接口将自动重制有效期为15分钟。
+
+### 用户接口
+
+`/user`
+
+必要请求头：
+
++ `Authorization` - Token
+
+#### account
+
+`/user/account`
+
+##### whoami
+
+`GET /user/account`
+
+返回Token对应的用户的Json信息。对应`DatabaseUserPojo`，示例：
+
+```json
+{
+    "id": 4,
+    "username": "hurui",
+    "passwordHash": "bed128365216c019988915ed3add75fb"
+}
+```
+
+##### delete
+
+`POST /user/delete`
+
+删除Token对应的账户。请求体为表单：
+
++ `username` - 待删除用户的用户名
++ `password_raw` - 待删除用户的密码明文
+
+服务器将对提交的参数进行检查：用户名需要与Token对应的用户名匹配，密码则需要经过计算MD5后与数据库核验匹配，二者同时满足才会删除账号。
+
+若用户名不匹配，服务器返回400，若密码不匹配，服务器返回401。成功时返回204。
+
+#### picture
+
+`/user/picture`
+
+##### GET
+
+
+
+##### POST
+
+
+
+##### :picTagId
+
+`/user/picture/:picTagId`，其中`:picTagId`为可变参数，对应图片的id号。
+
+###### PUT
+
+###### GET
+
+###### DELET
+
+
+
+### 超控接口
+
+
 
 ## 线程
 
@@ -132,17 +198,19 @@ API遵循REST规范：GET为无副作用获取数据，POST为有副作用地创
 
 ### 训练任务下发线程
 
-定期对数据库中未发布的任务进行扫描，并发布到Redis中
+定期对数据库中待发布的任务进行扫描，并发布到Redis中
 
-### 训练任务进度检测线程
+### 训练任务锁检测线程
 
-检测训练中的任务的Redis锁，若锁失效，且状态未更新，则训练标记为失败
+对于待发布任务，检测到对应任务ID的锁之后将更新任务状态为训练中。
 
-### 推理任务执行线程池
+对于训练中的任务，检测不到对应任务ID的锁时判定锁丢失，标记任务失败。
 
-线程池内可控执行利用模型对单张图片进行推理得到结果的操作
+### 磁盘清理线程 - TODO
 
-### 磁盘清理线程
+遍历上传文件夹，根据数据库内容，只保留有引用的文件，删掉未在数据库中出现过的数据。
 
-遍历上传文件夹，根据数据库内容，只保留有引用的文件，删掉未在数据库中出现过的数据
+由于该功能并非刚需，因此暂时还没有实现。
+
+~~没这个功能又不是不能用~~
 

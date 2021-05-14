@@ -15,7 +15,7 @@ object UBytePicUtil {
         val size = Pair(sampleModel.width, sampleModel.height)
         val channel = sampleModel.numBands
 
-        // data[x, y, channel]
+        // data[width, height, channel]
         val data = ByteArray(size.first * size.second * channel)
 
         for (x in 0 until size.first) {

@@ -54,9 +54,11 @@ fun main() {
                     val oldKey = jedisLock!!.lockKey
                     localLogger.info("Start using lock key: $oldKey")
                     while (isBusy && jedisLock?.lockKey == oldKey) {
-                        isBusy = false
-                        require(jedisLock!!.renew()) { "Failed renew lock: ${jedisLock!!.lockKey}" }
-                        isBusy = true
+                        synchronized(isBusy) {
+                            isBusy = false
+                            require(jedisLock!!.renew()) { "Failed renew lock: ${jedisLock!!.lockKey}" }
+                            isBusy = true
+                        }
                         localLogger.info("Renewed lock: ${jedisLock!!.lockKey}")
                         Thread.sleep(jedisLock!!.lockExpiryDuration.toMillis() / 2)
                     }

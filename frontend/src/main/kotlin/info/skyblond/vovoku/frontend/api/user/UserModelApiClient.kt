@@ -3,9 +3,12 @@ package info.skyblond.vovoku.frontend.api.user
 import info.skyblond.vovoku.commons.JacksonJsonUtil
 import info.skyblond.vovoku.commons.UBytePicUtil
 import info.skyblond.vovoku.commons.models.DatabaseModelInfoPojo
+import info.skyblond.vovoku.commons.models.ModelCreateRequest
 import info.skyblond.vovoku.commons.models.ModelTrainingStatus
+import info.skyblond.vovoku.frontend.api.jsonMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.slf4j.LoggerFactory
 import java.awt.image.BufferedImage
 
@@ -18,14 +21,15 @@ class UserModelApiClient internal constructor(
     private val urlPrefix: String = _urlPrefix.removeSuffix("/")
 
 
-    // TODO
-    // path("model") {
-    //                // request training new model
-    //                post(UserModelHandler.requestNewModelHandler)
-    //            }
+    fun trainingNewModel(request: ModelCreateRequest): Triple<Boolean, String, DatabaseModelInfoPojo?>{
+        val response = apiClient.doPost(urlPrefix, JacksonJsonUtil.objectToJson(request).toRequestBody(jsonMediaType))
+        return if (response.first == 200) {
+            Triple(true, "OK", JacksonJsonUtil.jsonToObject(response.second))
+        } else {
+            logger.error("TrainNewModel failed: Code: ${response.first}, message: ${response.second}")
+            Triple(false, response.second, null)
+        }
 
-    fun trainingNewModel(){
-        TODO()
     }
 
     fun listModel(lastStatus: ModelTrainingStatus?, page: Int, size: Int): Triple<Boolean, String, Array<DatabaseModelInfoPojo>>{
