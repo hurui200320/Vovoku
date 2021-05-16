@@ -1,11 +1,8 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.4.32'
+    id 'org.jetbrains.kotlin.jvm'
     id 'application'
 }
-
-group 'info.skyblond.vovoku'
-version '1.0-SNAPSHOT'
 
 application {
     mainClass = 'info.skyblond.vovoku.backend.MainKt'
@@ -16,9 +13,6 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.+'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.+'
     // log
     implementation 'ch.qos.logback:logback-classic:1.2.+'
 

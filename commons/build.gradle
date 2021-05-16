@@ -1,19 +1,13 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.4.32'
+    id 'org.jetbrains.kotlin.jvm'
 }
-
-group 'info.skyblond.vovoku'
-version '1.0.0'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib"
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
     // log
     implementation 'ch.qos.logback:logback-classic:1.2.+'
     // Redis

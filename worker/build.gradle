@@ -1,11 +1,8 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.4.32'
+    id 'org.jetbrains.kotlin.jvm'
     id 'application'
 }
-
-group 'info.skyblond.vovoku'
-version '1.0.0'
 
 application {
     mainClass = 'info.skyblond.vovoku.worker.MainKt'
@@ -16,10 +13,6 @@ repositories {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib"
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
-
     // DL4J
     implementation 'org.deeplearning4j:deeplearning4j-core:1.0.0-beta7'
     implementation 'org.nd4j:nd4j-native-platform:1.0.0-beta7'
@@ -28,8 +21,4 @@ dependencies {
     implementation 'redis.clients:jedis:3.5.1'
     // commons
     implementation project(":commons")
-}
-
-test {
-    useJUnitPlatform()
 }

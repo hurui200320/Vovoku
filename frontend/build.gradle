@@ -1,14 +1,17 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.4.32'
+    id 'org.jetbrains.kotlin.jvm'
     id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.10'
 }
 
-group 'info.skyblond.vovoku'
-version '1.0-SNAPSHOT'
+javafx {
+    version = "11.0.2"
+    modules = [ 'javafx.base', 'javafx.controls', 'javafx.graphics' ]
+}
 
 application {
-    mainClass = 'info.skyblond.vovoku.frontend.MainKt'
+    mainClass = 'info.skyblond.vovoku.frontend.Application'
 }
 
 repositories {
@@ -16,9 +19,6 @@ repositories {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
     // log
     implementation "ch.qos.logback:logback-classic:1.2.3"
     // okhttp
