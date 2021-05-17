@@ -183,17 +183,6 @@ class AdminApiClient(
         return query(requestBody, modelsEndPoint)
     }
 
-    fun terminateModel(modelId: Int): Boolean {
-        val requestBody = AdminRequest(
-            CRUD.UPDATE,
-            mutableMapOf<String, Any>()
-                .also { map ->
-                    modelId.let { map[AdminRequest.MODEL_ID_KEY] = it }
-                }
-        )
-        return doRequest(requestBody, modelsEndPoint)
-    }
-
     fun deleteModel(modelId: Int?, userId: Int?, filePath: String?, lastStatus: ModelTrainingStatus?): Boolean {
         val requestBody = AdminRequest(
             CRUD.DELETE,

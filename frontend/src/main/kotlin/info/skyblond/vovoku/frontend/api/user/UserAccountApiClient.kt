@@ -43,6 +43,7 @@ class UserAccountApiClient internal constructor(
             .build()
         val response = apiClient.doDelete("$urlPrefix/$deleteEndPoint", body)
         return if (response.first == 204) {
+            apiClient.token = ""
             Pair(true, "OK")
         } else {
             logger.error("DeleteAccount failed: Code: ${response.first}, message: ${response.second}")

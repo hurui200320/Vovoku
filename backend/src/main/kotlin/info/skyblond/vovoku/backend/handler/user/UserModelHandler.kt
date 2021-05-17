@@ -99,7 +99,7 @@ object UserModelHandler {
         val userId = ctx.getUserId()
         val page = ctx.getPage()
 
-        val lastStatus = ctx.formParam<String>("lastStatus").getOrNull()
+        val lastStatus = ctx.queryParam<String>("lastStatus").getOrNull()
 
         ctx.json(
             database.sequenceOf(ModelInfos)
@@ -111,7 +111,7 @@ object UserModelHandler {
                         sequence
                     }
                 }
-                .sortedBy { it.modelId }
+                .sortedByDescending { it.modelId }
                 .drop(page.offset)
                 .take(page.limit)
                 .map {

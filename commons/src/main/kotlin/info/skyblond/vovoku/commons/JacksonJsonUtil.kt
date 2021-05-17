@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets
 
 
 object JacksonJsonUtil {
-    val logger: Logger = LoggerFactory.getLogger(JacksonJsonUtil::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(JacksonJsonUtil::class.java)
     val jsonMapper = ObjectMapper(JsonFactory()).also {
         it.findAndRegisterModules()
         it.registerKotlinModule()
@@ -20,8 +20,13 @@ object JacksonJsonUtil {
         return jsonMapper.readValue(json, T::class.java)
     }
 
-    fun objectToJson(obj: Any): String {
-        return jsonMapper.writeValueAsString(obj)
+    @JvmOverloads
+    fun objectToJson(obj: Any, pretty: Boolean = false): String {
+        return if (pretty) {
+            jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj)
+        } else {
+            jsonMapper.writeValueAsString(obj)
+        }
     }
 
     fun writeToFile(file: File, obj: Any) {

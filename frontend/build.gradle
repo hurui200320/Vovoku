@@ -19,14 +19,21 @@ repositories {
 }
 
 dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.+'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.+'
     // log
     implementation "ch.qos.logback:logback-classic:1.2.3"
     // okhttp
     implementation "com.squareup.okhttp3:okhttp:4.9.0"
     // commons
     implementation project(":commons")
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.+'
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.+'
     implementation 'javax.xml.bind:jaxb-api:2.3.+'
+
+    // DL4J
+    implementation 'org.deeplearning4j:deeplearning4j-core:1.0.0-beta7'
+    implementation 'org.nd4j:nd4j-native-platform:1.0.0-beta7'
 }
 
 compileKotlin {

@@ -44,14 +44,14 @@ class UserPictureApiClient internal constructor(
         }
     }
 
-    fun getOnePic(tagId: Int): Triple<Boolean, String, DatabasePictureTagPojo?> {
+    fun getOnePic(tagId: Int): Triple<Boolean, String, Array<DatabasePictureTagPojo>> {
         val response = apiClient.doGet("$urlPrefix/$tagId", emptyMap())
 
         return if (response.first == 200) {
-            Triple(true, "OK", JacksonJsonUtil.jsonToObject(response.second))
+            Triple(true, "OK", arrayOf(JacksonJsonUtil.jsonToObject(response.second)))
         } else {
             logger.error("GetOnePic failed: Code: ${response.first}, message: ${response.second}")
-            Triple(false, response.second, null)
+            Triple(false, response.second, arrayOf())
         }
     }
 

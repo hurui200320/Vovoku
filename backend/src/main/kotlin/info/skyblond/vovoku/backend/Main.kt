@@ -37,9 +37,7 @@ fun main() {
     setRouter(app)
 
     // launch data generation thread
-    ThreadUtil.launchDataGenThread(2, TimeUnit.MINUTES)
-    ThreadUtil.launchDataGenThread(3, TimeUnit.MINUTES)
-    ThreadUtil.launchDataGenThread(5, TimeUnit.MINUTES)
+    ThreadUtil.launchDataGenThread(1, TimeUnit.MINUTES)
     // launch redis task distributing thread
     ThreadUtil.launchTaskDistributionThread(1, TimeUnit.MINUTES)
     // the thread checking if a lock is showed

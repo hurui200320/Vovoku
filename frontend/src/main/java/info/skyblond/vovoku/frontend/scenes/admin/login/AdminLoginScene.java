@@ -2,6 +2,7 @@ package info.skyblond.vovoku.frontend.scenes.admin.login;
 
 import info.skyblond.vovoku.frontend.api.admin.AdminApiClient;
 import info.skyblond.vovoku.frontend.scenes.PopupUtil;
+import info.skyblond.vovoku.frontend.scenes.user.SubScene;
 import info.skyblond.vovoku.frontend.scenes.user.login.UserLoginScene;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -19,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
-public class AdminLoginScene {
+public class AdminLoginScene implements SubScene {
     private final Logger logger = LoggerFactory.getLogger(AdminLoginScene.class);
 
     private final OkHttpClient httpClient;
@@ -33,6 +34,7 @@ public class AdminLoginScene {
         this.httpClient = httpClient;
     }
 
+    @Override
     public Pane getRootLayout() {
         GridPane root = new GridPane();
         root.setPadding(new Insets(10, 10, 10, 10));
@@ -66,6 +68,7 @@ public class AdminLoginScene {
         return root;
     }
 
+    @Override
     public void initScene(Stage stage, Scene scene) {
         this.primaryStage = stage;
         this.currentScene = scene;
@@ -88,7 +91,7 @@ public class AdminLoginScene {
                     DatatypeConverter.parseHexBinary(this.aesKeyTextField.getText().toUpperCase()),
                     "AES"
             );
-        }catch (Exception e){
+        } catch (Exception e) {
             PopupUtil.INSTANCE.showError(
                     "Login failed",
                     "Cannot parse key:\n" + e.getLocalizedMessage()

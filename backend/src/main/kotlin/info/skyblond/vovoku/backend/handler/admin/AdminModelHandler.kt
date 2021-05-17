@@ -78,29 +78,8 @@ object AdminModelHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.ja
         ctx.json(result)
     }
 
-    /**
-     * Terminate training by id
-     * */
     override fun handleUpdate(ctx: Context, request: AdminRequest) {
-        val query = query(
-            request.typedParameter(AdminRequest.MODEL_ID_KEY),
-            null, null, null,
-            null
-        )
-        if (query.totalRecords != 1) {
-            throw BadRequestResponse("Cannot update multiple entity at once")
-        }
-        // only terminate training
-        val entity = query.first()
-        entity.trainingInfo.let {
-            if (it.lastOrNull()?.first == ModelTrainingStatus.TERMINATED)
-                throw BadRequestResponse("Cannot terminate a terminated task")
-            entity.addTrainingStatus(
-                ModelTrainingStatus.TERMINATED, "Terminated by admin"
-            )
-        }
-        entity.flushChanges()
-        ctx.json(entity.toPojo())
+        throw NotImplementedError("Admin cannot modify models")
     }
 
     override fun handleDelete(ctx: Context, request: AdminRequest) {

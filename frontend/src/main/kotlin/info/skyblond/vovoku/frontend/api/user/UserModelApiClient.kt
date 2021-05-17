@@ -32,13 +32,13 @@ class UserModelApiClient internal constructor(
 
     }
 
-    fun listModel(lastStatus: ModelTrainingStatus?, page: Int, size: Int): Triple<Boolean, String, Array<DatabaseModelInfoPojo>>{
+    fun listModel(lastStatus: String?, page: Int, size: Int): Triple<Boolean, String, Array<DatabaseModelInfoPojo>>{
         val response = apiClient.doGet(
             urlPrefix, mutableMapOf<String, Any>(
                 "page" to page,
                 "size" to size
             ).apply {
-                lastStatus?.let { put("lastStatus", it.name) }
+                lastStatus?.let { put("lastStatus", it) }
             }
         )
         return if (response.first == 200) {
@@ -49,14 +49,14 @@ class UserModelApiClient internal constructor(
         }
     }
 
-    fun getOneModel(modelId: Int): Triple<Boolean, String, DatabaseModelInfoPojo?>{
+    fun getOneModel(modelId: Int): Triple<Boolean, String, Array<DatabaseModelInfoPojo>>{
         val response = apiClient.doGet("$urlPrefix/$modelId", emptyMap())
 
         return if (response.first == 200) {
-            Triple(true, "OK", JacksonJsonUtil.jsonToObject(response.second))
+            Triple(true, "OK", arrayOf(JacksonJsonUtil.jsonToObject(response.second)))
         } else {
             logger.error("GetOneModel failed: Code: ${response.first}, message: ${response.second}")
-            Triple(false, response.second, null)
+            Triple(false, response.second, arrayOf())
         }
     }
 

@@ -3,6 +3,7 @@ package info.skyblond.vovoku.frontend.scenes.user.login;
 import info.skyblond.vovoku.frontend.api.user.UserApiClient;
 import info.skyblond.vovoku.frontend.scenes.PopupUtil;
 import info.skyblond.vovoku.frontend.scenes.admin.login.AdminLoginScene;
+import info.skyblond.vovoku.frontend.scenes.user.SubScene;
 import info.skyblond.vovoku.frontend.scenes.user.funtion.UserHomePage;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -18,7 +19,7 @@ import okhttp3.OkHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class UserLoginScene {
+public class UserLoginScene implements SubScene {
     private final Logger logger = LoggerFactory.getLogger(UserLoginScene.class);
 
     private final OkHttpClient httpClient;
@@ -33,6 +34,7 @@ public class UserLoginScene {
     private TextField usernameTextField;
     private PasswordField passwordField;
 
+    @Override
     public Pane getRootLayout() {
         GridPane root = new GridPane();
         root.setPadding(new Insets(10, 10, 10, 10));
@@ -55,8 +57,8 @@ public class UserLoginScene {
         root.add(this.passwordField, 1, 2);
 
         // TODO debug only
-        usernameTextField.setText("hurui");
-        passwordField.setText("passw0rd");
+        this.usernameTextField.setText("hurui");
+        this.passwordField.setText("passw0rd");
 
         Button login = new Button("Login");
         login.setDefaultButton(true);
@@ -74,6 +76,7 @@ public class UserLoginScene {
         return root;
     }
 
+    @Override
     public void initScene(Stage stage, Scene scene) {
         this.primaryStage = stage;
         this.currentScene = scene;
