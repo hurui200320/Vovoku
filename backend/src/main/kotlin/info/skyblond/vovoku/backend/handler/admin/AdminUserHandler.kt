@@ -39,8 +39,8 @@ object AdminUserHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.jav
             .sortedBy { it.userId }
             .let {
                 if (page != null) {
-                    it.drop(page.offset)
-                        .take(page.limit)
+                    it.drop(page.offset())
+                        .take(page.limit())
                 } else {
                     it
                 }
@@ -98,13 +98,12 @@ object AdminUserHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.jav
     }
 
     /**
-     * Delete user.
+     * Delete user by id.
      * */
     override fun handleDelete(ctx: Context, request: AdminRequest) {
         val userId = request.typedParameter<Int>(AdminRequest.USER_ID_KEY)
-        val username = request.typedParameter<String>(AdminRequest.USER_ID_KEY)
 
-        val result = query(userId, username, null)
+        val result = query(userId, null, null)
             .map {
                 it.delete()
                 it.toPojo()

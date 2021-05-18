@@ -1,24 +1,20 @@
 package info.skyblond.vovoku.commons.models
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 
 data class Page(
-    private val _page: Int?,
-    private val _limit: Int?
+    val page: Int?,
+    val size: Int?
 ) {
     init {
-        require(_page == null || _page > 0)
-        require(_limit == null || _limit > 0)
+        require(page == null || page > 0)
+        require(size == null || size > 0)
     }
-
     @JsonIgnore
-    private val truePage = _page ?: 1
-
+    fun limit(): Int = size ?: 20
     @JsonIgnore
-    val limit = _limit ?: 20
-
-    @JsonIgnore
-    val offset = (truePage - 1) * limit
+    fun offset(): Int = ((page ?: 1) - 1) * limit()
 }
 
 enum class CRUD {
@@ -32,7 +28,8 @@ interface AdminCRUDRequest {
 data class AdminRequest(
     override val operation: CRUD,
     val parameter: Map<String, Any>,
-    val page: Page = Page(null, null),
+    @JsonProperty("segment")
+    val page: Page,
 ) : AdminCRUDRequest {
     inline fun <reified T> typedParameter(key: String): T? {
         val obj = parameter[key] ?: return null
@@ -53,7 +50,6 @@ data class AdminRequest(
         const val MODEL_ID_KEY = "modelID"
         const val MODEL_LAST_STATUS_KEY = "modelLastStatus"
 
-        const val FILE_PATH_KEY = "filePath"
         const val FILE_TYPE_KEY = "fileType"
         const val FILE_TYPE_VALUE_MODEL = "model"
         const val FILE_TYPE_VALUE_PICTURE = "picture"

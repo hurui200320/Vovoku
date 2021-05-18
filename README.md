@@ -24,8 +24,7 @@
 
 ## 系统设计
 
-采用Gradle的模块设计，`backend`为服务端（后端），`frontend`为客户端（前端），`worker`为模型的训练者。 用户和管理员通过前端模块与服务端进行交互，服务端提供基于HTTP的API支持。
-同时服务端与Redis交互，向Worker分发训练任务（训练参数+训练数据）
+采用Gradle的模块设计，`backend`为服务端（后端），`frontend`为客户端（前端），`worker`为模型的训练者。 用户和管理员通过前端模块与服务端进行交互，服务端提供基于HTTP的API支持。同时服务端与Redis交互，向Worker分发训练任务（训练参数+训练数据）
 
 后端技术栈如下：
 
@@ -33,9 +32,9 @@
 + Javalin（提供HTTP API框架）
 + Ktorm（ORM数据库支持）
 + PostgreSQL（数据库）
-+ HikariCP
++ HikariCP（数据库连接池）
 + Docker compose（环境治理）
-+ YAML配置文件
++ YAML（配置文件）
 + DL4J训练框架
 + Redis（消息传递）
 
@@ -44,4 +43,3 @@
 + Java/Kotlin（主要开发语言）
 + JavaFX（GUI框架）
 + CSS（美化视觉效果）
-

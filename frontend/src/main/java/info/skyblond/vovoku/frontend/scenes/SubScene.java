@@ -1,4 +1,4 @@
-package info.skyblond.vovoku.frontend.scenes.user;
+package info.skyblond.vovoku.frontend.scenes;
 
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;

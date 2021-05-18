@@ -1,8 +1,8 @@
-package info.skyblond.vovoku.frontend.scenes.user.funtion;
+package info.skyblond.vovoku.frontend.scenes.admin.function;
 
-import info.skyblond.vovoku.commons.UBytePicUtil;
 import info.skyblond.vovoku.commons.models.DatabasePictureTagPojo;
-import info.skyblond.vovoku.frontend.api.user.UserPictureApiClient;
+import info.skyblond.vovoku.commons.models.Page;
+import info.skyblond.vovoku.frontend.api.admin.AdminApiClient;
 import info.skyblond.vovoku.frontend.scenes.PopupUtil;
 import info.skyblond.vovoku.frontend.scenes.TableViewTemplate;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -11,13 +11,13 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import kotlin.Pair;
 import kotlin.Triple;
 
@@ -26,18 +26,16 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Objects;
 
-public class UserPictureSubLayer extends TableViewTemplate<DatabasePictureTagPojo> {
-    private final UserPictureApiClient pictureApiClient;
-    private final Stage stage;
+public class AdminPictureSubLayer extends TableViewTemplate<DatabasePictureTagPojo> {
+    private final AdminApiClient adminApiClient;
 
-    public UserPictureSubLayer(
-            UserPictureApiClient pictureApiClient, Stage stage) {
-        this.pictureApiClient = pictureApiClient;
-        this.stage = stage;
+    public AdminPictureSubLayer(AdminApiClient adminApiClient) {
+        this.adminApiClient = adminApiClient;
     }
 
     private Boolean usedForTrainFilter = null;
     private String folderNameFilter = null;
+    private Integer userIdFilter = null;
 
     @Override
     public Node getTopRightRoot() {
@@ -46,16 +44,24 @@ public class UserPictureSubLayer extends TableViewTemplate<DatabasePictureTagPoj
     }
 
     @Override
+    public Button[] getRightButtons(){
+        this.uploadButton.setDisable(true);
+        return super.getRightButtons();
+    }
+
+    @Override
     protected void updateFilter() {
         var current = this.configGenMap();
         current.put("usedForTrainFilter", this.usedForTrainFilter);
         current.put("datasetFilter", this.folderNameFilter);
+        current.put("userIdFilter", this.userIdFilter);
 
         try {
             var newFilter = this.configAskUser(current);
             if (newFilter != null) {
                 this.usedForTrainFilter = (Boolean) newFilter.get("usedForTrainFilter");
                 this.folderNameFilter = (String) newFilter.get("datasetFilter");
+                this.userIdFilter = (Integer) newFilter.get("userIdFilter");
                 this.loadData();
             }
         } catch (Exception e) {
@@ -69,7 +75,6 @@ public class UserPictureSubLayer extends TableViewTemplate<DatabasePictureTagPoj
         this.tableView = new TableView<>();
         this.tableView.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldSelection, newSelection) -> {
-                    this.updateButton.setDisable(newSelection == null);
                     this.deleteButton.setDisable(newSelection == null);
                     this.detailButton.setDisable(newSelection == null);
                 }
@@ -79,6 +84,11 @@ public class UserPictureSubLayer extends TableViewTemplate<DatabasePictureTagPoj
                 param -> new SimpleIntegerProperty(param.getValue().getTagId()).asObject()
         );
         tagIdColumn.setSortable(false);
+        TableColumn<DatabasePictureTagPojo, Integer> userIdColumn = new TableColumn<>("User Id");
+        userIdColumn.setCellValueFactory(
+                param -> new SimpleIntegerProperty(param.getValue().getUserId()).asObject()
+        );
+        userIdColumn.setSortable(false);
         TableColumn<DatabasePictureTagPojo, ?> sizeColumn = new TableColumn<>("size");
         TableColumn<DatabasePictureTagPojo, Integer> widthColumn = new TableColumn<>("width");
         widthColumn.setCellValueFactory(
@@ -113,7 +123,7 @@ public class UserPictureSubLayer extends TableViewTemplate<DatabasePictureTagPoj
         );
         usageColumn.setSortable(false);
         this.tableView.getColumns().addAll(
-                tagIdColumn, sizeColumn, tagColumn, datasetNameColumn, usageColumn
+                tagIdColumn, userIdColumn, sizeColumn, tagColumn, datasetNameColumn, usageColumn
         );
 
         // initial load
@@ -123,13 +133,23 @@ public class UserPictureSubLayer extends TableViewTemplate<DatabasePictureTagPoj
 
     @Override
     protected Triple<Boolean, String, DatabasePictureTagPojo[]> getOne() {
-        return this.pictureApiClient.getOnePic(this.idFilter);
+        var result = this.adminApiClient.queryPicture(this.idFilter, null, null, null, new Page(null, null));
+        if (result.length == 0) {
+            return new Triple<>(false, "Pic id not found", result);
+        } else {
+            return new Triple<>(true, "OK", result);
+        }
     }
 
     @Override
     protected Pair<Boolean, String> deleteOne() {
         var id = this.tableView.getSelectionModel().getSelectedItem().getTagId();
-        return this.pictureApiClient.deleteOnePic(id);
+        var result = this.adminApiClient.deletePicture(id);
+        if (result) {
+            return new Pair<>(true, "OK");
+        } else {
+            return new Pair<>(false, "Cannot delete pic");
+        }
     }
 
     @Override
@@ -137,10 +157,10 @@ public class UserPictureSubLayer extends TableViewTemplate<DatabasePictureTagPoj
         var pic = this.tableView.getSelectionModel().getSelectedItem();
 
         PopupUtil.INSTANCE.doWithProcessingPopup(
-                () -> this.pictureApiClient.fetchPic(pic.getFilePath()),
+                () -> this.adminApiClient.fetchPic(pic.getTagId()),
                 imageResult -> {
-                    if (!imageResult.getFirst()) {
-                        PopupUtil.INSTANCE.showError(null, "Error when fetching pic: " + imageResult.getSecond());
+                    if (imageResult == null) {
+                        PopupUtil.INSTANCE.showError(null, "Cannot fetching pic");
                         return null;
                     }
                     var alert = new Alert(Alert.AlertType.INFORMATION);
@@ -152,7 +172,7 @@ public class UserPictureSubLayer extends TableViewTemplate<DatabasePictureTagPoj
                     expContent.setMaxWidth(Double.MAX_VALUE);
 
                     var imageView = new ImageView();
-                    var image = SwingFXUtils.toFXImage(imageResult.getThird(), null);
+                    var image = SwingFXUtils.toFXImage(imageResult, null);
                     imageView.setImage(image);
                     imageView.setSmooth(true);
                     imageView.setPreserveRatio(true);
@@ -178,138 +198,15 @@ public class UserPictureSubLayer extends TableViewTemplate<DatabasePictureTagPoj
 
     @Override
     protected void updateOne() {
-        var pic = this.tableView.getSelectionModel().getSelectedItem();
-
-        Integer newTag;
-        Boolean usedForTrain;
-        String datasetName;
-
-        try {
-            newTag = Integer.parseInt(PopupUtil.INSTANCE.textInputPopup(
-                    "Update pic",
-                    null, "new tag"
-            ));
-            Objects.requireNonNull(newTag);
-        } catch (Exception e) {
-            newTag = null;
-            PopupUtil.INSTANCE.showError(null, "UsedForTraining flag will not update", true);
-        }
-
-        try {
-            datasetName = PopupUtil.INSTANCE.textInputPopup(
-                    "Update pic",
-                    null, "dataset name"
-            );
-            if (Objects.requireNonNull(datasetName).isBlank()) {
-                datasetName = null;
-            }
-            Objects.requireNonNull(datasetName);
-        } catch (Exception e) {
-            datasetName = null;
-            PopupUtil.INSTANCE.showError(null, "DatasetName will not update", true);
-        }
-
-        try {
-            var re = PopupUtil.INSTANCE.textInputPopup(
-                    "Update pic",
-                    null, "for train? (true or false)"
-            );
-            if (re.isBlank()) {
-                throw new Exception();
-            }
-            usedForTrain = Boolean.parseBoolean(re);
-            Objects.requireNonNull(usedForTrain);
-        } catch (Exception e) {
-            usedForTrain = null;
-            PopupUtil.INSTANCE.showError(null, "Invalid tag, tag will not update", true);
-        }
-
-        Integer finalNewTag = newTag;
-        Boolean finalUsedForTrain = usedForTrain;
-        String finalDatasetName = datasetName;
-        PopupUtil.INSTANCE.doWithProcessingPopupWithoutCancel(
-                () -> this.pictureApiClient.updateOnePicTag(pic.getTagId(), finalNewTag, finalUsedForTrain, finalDatasetName),
-                result -> {
-                    if (result.getFirst()) {
-                        this.loadData();
-                    } else {
-                        PopupUtil.INSTANCE.showError(null, "Error when updating pic: " + result.getSecond());
-                    }
-                    return null;
-                },
-                e -> {
-                    PopupUtil.INSTANCE.showError(null, "Error when updating pic: " + e.getLocalizedMessage());
-                    return null;
-                }
-        );
-
     }
 
     @Override
     protected void uploadOne() {
-        FileChooser fileChooser = new FileChooser();
-        File selectedFile = fileChooser.showOpenDialog(this.stage);
-        if (selectedFile == null) {
-            return;
-        }
-        BufferedImage image;
-        try {
-            image = ImageIO.read(selectedFile);
-            Objects.requireNonNull(image);
-        } catch (Exception e) {
-            PopupUtil.INSTANCE.showError(null, "Invalid Image: " + e.getLocalizedMessage());
-            return;
-        }
-
-        // if need strip to gray
-        if (PopupUtil.INSTANCE.yesOrNoPopup("Upload image", null, "Stripe to gray?")) {
-            image = UBytePicUtil.INSTANCE.picToGrayScale(image);
-        }
-
-        int tag;
-        try {
-            tag = Integer.parseInt(PopupUtil.INSTANCE.textInputPopup(
-                    "Upload image", "What number in this pic?", "Number"
-            ));
-        } catch (Exception e) {
-            PopupUtil.INSTANCE.showError(null, "Invalid tag: " + e.getLocalizedMessage());
-            return;
-        }
-
-        var folderName = PopupUtil.INSTANCE.textInputPopup(
-                "Upload image", "What dataset this pic in?", "dataset",
-                folderNameFilter
-        );
-
-        if (folderName.isBlank()){
-            PopupUtil.INSTANCE.showError(null, "Invalid dataset name: cannot be empty");
-            return;
-        }
-
-        boolean forTrain = PopupUtil.INSTANCE.yesOrNoPopup(
-                "Upload image", null, "Is this pic used for training?"
-        );
-
-        BufferedImage finalImage = image;
-        PopupUtil.INSTANCE.doWithProcessingPopupWithoutCancel(
-                () -> this.pictureApiClient.uploadPic(finalImage, tag, forTrain, folderName),
-                result -> {
-                    if (result.getFirst()) {
-                        this.loadData();
-                    } else {
-                        PopupUtil.INSTANCE.showError(null, "Error when uploading pic: " + result.getSecond());
-                    }
-                    return null;
-                },
-                e -> {
-                    PopupUtil.INSTANCE.showError(null, "Error when uploading pic: " + e.getLocalizedMessage());
-                    return null;
-                }
-        );
     }
 
     @Override
     protected Triple<Boolean, String, DatabasePictureTagPojo[]> getList() {
-        return this.pictureApiClient.listPic(this.usedForTrainFilter, this.folderNameFilter, this.page, this.size);
+        var result = this.adminApiClient.queryPicture(null, userIdFilter, usedForTrainFilter, folderNameFilter, new Page(this.page, this.size));
+        return new Triple<>(true, "OK", result);
     }
 }

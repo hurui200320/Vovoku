@@ -4,9 +4,7 @@ import info.skyblond.vovoku.backend.database.DatabaseUtil
 import info.skyblond.vovoku.backend.database.ModelInfo
 import info.skyblond.vovoku.backend.database.ModelInfos
 import info.skyblond.vovoku.commons.models.AdminRequest
-import info.skyblond.vovoku.commons.models.ModelTrainingStatus
 import info.skyblond.vovoku.commons.models.Page
-import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
 import org.ktorm.dsl.eq
 import org.ktorm.entity.*
@@ -19,7 +17,6 @@ object AdminModelHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.ja
     private fun query(
         modelId: Int?,
         userId: Int?,
-        filePath: String?,
         lastStatus: String?,
         page: Page?
     ): EntitySequence<ModelInfo, ModelInfos> {
@@ -39,24 +36,17 @@ object AdminModelHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.ja
                 }
             }
             .let { sequence ->
-                if (filePath != null) {
-                    sequence.filter { it.filePath eq "${filePath}%" }
-                } else {
-                    sequence
-                }
-            }
-            .let { sequence ->
                 if (lastStatus != null) {
                     sequence.filter { it.lastStatus eq lastStatus }
                 } else {
                     sequence
                 }
             }
-            .sortedBy { it.modelId }
+            .sortedByDescending { it.modelId }
             .let {
                 if (page != null) {
-                    it.drop(page.offset)
-                        .take(page.limit)
+                    it.drop(page.offset())
+                        .take(page.limit())
                 } else {
                     it
                 }
@@ -71,7 +61,6 @@ object AdminModelHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.ja
         val result = query(
             request.typedParameter(AdminRequest.MODEL_ID_KEY),
             request.typedParameter(AdminRequest.USER_ID_KEY),
-            request.typedParameter(AdminRequest.FILE_PATH_KEY),
             request.typedParameter(AdminRequest.MODEL_LAST_STATUS_KEY),
             request.page
         ).map { it.toPojo() }
@@ -85,10 +74,7 @@ object AdminModelHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.ja
     override fun handleDelete(ctx: Context, request: AdminRequest) {
         val result = query(
             request.typedParameter(AdminRequest.MODEL_ID_KEY),
-            request.typedParameter(AdminRequest.USER_ID_KEY),
-            request.typedParameter(AdminRequest.FILE_PATH_KEY),
-            request.typedParameter(AdminRequest.MODEL_LAST_STATUS_KEY),
-            null
+            null, null, null
         )
             .map {
                 it.delete()

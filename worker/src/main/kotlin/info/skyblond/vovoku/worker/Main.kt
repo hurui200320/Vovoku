@@ -169,7 +169,7 @@ fun main() {
                 )
 
                 val model = MultiLayerNetwork(conf)
-                // TODO read out model and continue training
+
                 model.init()
                 model.fit(customTrain, trainingParameter.epochs)
                 val eval = model.evaluate<Evaluation>(customTest)

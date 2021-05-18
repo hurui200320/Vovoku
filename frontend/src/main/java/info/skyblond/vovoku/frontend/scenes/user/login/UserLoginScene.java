@@ -3,7 +3,7 @@ package info.skyblond.vovoku.frontend.scenes.user.login;
 import info.skyblond.vovoku.frontend.api.user.UserApiClient;
 import info.skyblond.vovoku.frontend.scenes.PopupUtil;
 import info.skyblond.vovoku.frontend.scenes.admin.login.AdminLoginScene;
-import info.skyblond.vovoku.frontend.scenes.user.SubScene;
+import info.skyblond.vovoku.frontend.scenes.SubScene;
 import info.skyblond.vovoku.frontend.scenes.user.funtion.UserHomePage;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -55,10 +55,6 @@ public class UserLoginScene implements SubScene {
         root.add(new Label("Password"), 0, 2);
         this.passwordField = new PasswordField();
         root.add(this.passwordField, 1, 2);
-
-        // TODO debug only
-        this.usernameTextField.setText("hurui");
-        this.passwordField.setText("passw0rd");
 
         Button login = new Button("Login");
         login.setDefaultButton(true);

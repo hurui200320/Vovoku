@@ -3,12 +3,13 @@ package info.skyblond.vovoku.frontend.scenes.user.funtion;
 import info.skyblond.vovoku.commons.dl4j.PrototypeDescriptor;
 import info.skyblond.vovoku.frontend.api.user.UserPrototypeApiClient;
 import info.skyblond.vovoku.frontend.scenes.PopupUtil;
+import info.skyblond.vovoku.frontend.scenes.TableViewTemplate;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.Node;
-import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
+import javafx.scene.control.Button;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import kotlin.Pair;
 import kotlin.Triple;
 
@@ -110,16 +111,7 @@ public class UserPrototypeSubLayer extends TableViewTemplate<PrototypeDescriptor
                         PopupUtil.INSTANCE.showError(null, "Error when fetching prototype: " + result.getSecond());
                         return null;
                     }
-                    var alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setTitle("View Prototype");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Prototype details:");
 
-                    var expContent = new GridPane();
-                    expContent.setMaxWidth(Double.MAX_VALUE);
-
-                    var textArea = new TextArea();
-                    textArea.setEditable(false);
                     var proto = result.getThird();
 
                     StringBuilder stringBuilder = new StringBuilder();
@@ -158,15 +150,10 @@ public class UserPrototypeSubLayer extends TableViewTemplate<PrototypeDescriptor
                                 .append(proto.getNetworkParameterDescription()[i - 1]).append("\n");
                     }
 
-                    textArea.setText(stringBuilder.toString());
-                    textArea.setMaxWidth(Double.MAX_VALUE);
-                    textArea.setMaxHeight(Double.MAX_VALUE);
-                    GridPane.setHgrow(textArea, Priority.ALWAYS);
-                    GridPane.setVgrow(textArea, Priority.ALWAYS);
-                    expContent.add(textArea, 0, 0);
-                    alert.getDialogPane().setExpandableContent(expContent);
-                    alert.getDialogPane().expandedProperty().set(true);
-                    alert.show();
+                    PopupUtil.INSTANCE.multiLineTextAreaPopup(
+                            "View Prototype", null, "Prototype details:",
+                            stringBuilder.toString()
+                    );
                     return null;
                 },
                 e -> {

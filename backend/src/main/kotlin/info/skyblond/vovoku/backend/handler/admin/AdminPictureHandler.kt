@@ -5,7 +5,6 @@ import info.skyblond.vovoku.backend.database.PictureTag
 import info.skyblond.vovoku.backend.database.PictureTags
 import info.skyblond.vovoku.commons.models.AdminRequest
 import info.skyblond.vovoku.commons.models.Page
-import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
 import org.ktorm.dsl.eq
 import org.ktorm.entity.*
@@ -18,7 +17,8 @@ object AdminPictureHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.
     private fun query(
         tagId: Int?,
         userId: Int?,
-        filePath: String?,
+        forTrain: Boolean?,
+        folderName: String?,
         page: Page?
     ): EntitySequence<PictureTag, PictureTags> {
         return database.sequenceOf(PictureTags)
@@ -37,8 +37,15 @@ object AdminPictureHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.
                 }
             }
             .let { sequence ->
-                if (filePath != null) {
-                    sequence.filter { it.filePath eq "${filePath}%" }
+                if (forTrain != null) {
+                    sequence.filter { it.usedForTrain eq forTrain }
+                } else {
+                    sequence
+                }
+            }
+            .let { sequence ->
+                if (folderName != null) {
+                    sequence.filter { it.folderName eq folderName }
                 } else {
                     sequence
                 }
@@ -46,8 +53,8 @@ object AdminPictureHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.
             .sortedBy { it.tagId }
             .let {
                 if (page != null) {
-                    it.drop(page.offset)
-                        .take(page.limit)
+                    it.drop(page.offset())
+                        .take(page.limit())
                 } else {
                     it
                 }
@@ -62,39 +69,21 @@ object AdminPictureHandler : AdminCRUDHandler<AdminRequest>(AdminRequest::class.
         val result = query(
             request.typedParameter(AdminRequest.TAG_ID_KEY),
             request.typedParameter(AdminRequest.USER_ID_KEY),
-            request.typedParameter(AdminRequest.FILE_PATH_KEY),
+            request.typedParameter(AdminRequest.TAG_FOR_TRAIN_KEY),
+            request.typedParameter(AdminRequest.TAG_FOLDER_NAME_KEY),
             request.page
         ).map { it.toPojo() }
         ctx.json(result)
     }
 
-    /**
-     * Update pic by id
-     * */
     override fun handleUpdate(ctx: Context, request: AdminRequest) {
-        val query = query(
-            request.typedParameter(AdminRequest.TAG_ID_KEY),
-            null, null,
-            null
-        )
-        if (query.totalRecords != 1) {
-            throw BadRequestResponse("Cannot update multiple entity at once")
-        }
-        val entity = query.first()
-        entity.update(
-            request.typedParameter(AdminRequest.TAG_DATA_KEY),
-            request.typedParameter(AdminRequest.TAG_FOR_TRAIN_KEY),
-            request.typedParameter(AdminRequest.TAG_FOLDER_NAME_KEY),
-        )
-        ctx.json(entity.toPojo())
+        throw NotImplementedError("Admin cannot update pictures")
     }
 
     override fun handleDelete(ctx: Context, request: AdminRequest) {
         val result = query(
             request.typedParameter(AdminRequest.TAG_ID_KEY),
-            request.typedParameter(AdminRequest.USER_ID_KEY),
-            request.typedParameter(AdminRequest.FILE_PATH_KEY),
-            null
+            null, null, null, null
         )
             .map {
                 it.delete()

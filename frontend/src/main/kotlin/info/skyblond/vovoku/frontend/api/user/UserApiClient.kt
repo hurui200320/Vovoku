@@ -20,7 +20,7 @@ class UserApiClient(
     private val modelPath = "user/model"
     private val prototypePath = "user/prototype"
 
-    internal var token: String = ""
+    var token: String = ""
 
     // sub api clients
     val accountApiClient = UserAccountApiClient(this, httpClient, "$urlPrefix/$accountPath")

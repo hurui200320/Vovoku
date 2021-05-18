@@ -20,6 +20,10 @@ object JacksonJsonUtil {
         return jsonMapper.readValue(json, T::class.java)
     }
 
+    fun <T> jsonToObject(json: String, clazz: Class<T>): T {
+        return jsonMapper.readValue(json, clazz)
+    }
+
     @JvmOverloads
     fun objectToJson(obj: Any, pretty: Boolean = false): String {
         return if (pretty) {

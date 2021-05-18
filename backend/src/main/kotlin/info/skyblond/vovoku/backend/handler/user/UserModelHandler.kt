@@ -112,8 +112,8 @@ object UserModelHandler {
                     }
                 }
                 .sortedByDescending { it.modelId }
-                .drop(page.offset)
-                .take(page.limit)
+                .drop(page.offset())
+                .take(page.limit())
                 .map {
                     it.toPojo(ctx)
                 }
@@ -131,8 +131,8 @@ object UserModelHandler {
         ctx.json(
             ModelPrototype.nameToPrototype.values
                 .map { it.descriptor }
-                .drop(page.offset)
-                .take(page.limit)
+                .drop(page.offset())
+                .take(page.limit())
         )
     }
 }

@@ -12,14 +12,14 @@ class MnistUpload {
         val httpClient = OkHttpClient()
         val userApiClient = UserApiClient(httpClient, "http://127.0.0.1:7000/")
 
-        println(userApiClient.login("hurui", "passw0rd"))
+        println(userApiClient.login("user", "user"))
         println(userApiClient.accountApiClient.whoAmI())
         val datasetName = "mnist"
 
-        val usedForTrain = true
-        val baseDir = File("D:\\Vovoku dataset\\train")
-//        val usedForTrain = false
-//        val baseDir = File("D:\\Vovoku dataset\\test")
+//        val usedForTrain = true
+//        val baseDir = File("D:\\Vovoku dataset\\train")
+        val usedForTrain = false
+        val baseDir = File("D:\\Vovoku dataset\\test")
 
         val counter = mutableMapOf<Int, Int>()
         (0..9).forEach { counter[it] = 1 }

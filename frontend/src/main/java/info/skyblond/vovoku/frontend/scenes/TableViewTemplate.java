@@ -1,4 +1,4 @@
-package info.skyblond.vovoku.frontend.scenes.user.funtion;
+package info.skyblond.vovoku.frontend.scenes;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import info.skyblond.vovoku.commons.JacksonJsonUtil;

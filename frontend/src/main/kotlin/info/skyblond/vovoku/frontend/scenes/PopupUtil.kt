@@ -14,13 +14,44 @@ import java.util.concurrent.atomic.AtomicReference
 object PopupUtil : AutoCloseable {
     private val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
 
-    fun showError(headerText: String?, contentText: String) {
+    @JvmOverloads
+    fun showError(headerText: String?, contentText: String, wait: Boolean = false) {
         val error = Alert(Alert.AlertType.ERROR)
         error.title = "Error!"
         error.headerText = headerText
         error.contentText = contentText
         error.dialogPane.minHeight = Region.USE_PREF_SIZE
-        error.showAndWait()
+        if (wait)
+            error.showAndWait()
+        else
+            error.show()
+    }
+
+    fun multiLineTextAreaPopup(
+        title: String,
+        headerText: String?,
+        contentText: String,
+        multiLineContent: String
+    ) {
+        val alert = Alert(Alert.AlertType.INFORMATION)
+        alert.title = title
+        alert.headerText = headerText
+        alert.contentText = contentText
+
+        val expContent = GridPane()
+        expContent.maxWidth = Double.MAX_VALUE
+
+        val textArea = TextArea()
+        textArea.isEditable = false
+        textArea.maxWidth = Double.MAX_VALUE
+        textArea.maxHeight = Double.MAX_VALUE
+        GridPane.setHgrow(textArea, Priority.ALWAYS)
+        textArea.text = multiLineContent
+        GridPane.setVgrow(textArea, Priority.ALWAYS)
+        expContent.add(textArea, 0, 0)
+        alert.dialogPane.expandableContent = expContent
+        alert.dialogPane.expandedProperty().set(true)
+        alert.show()
     }
 
     fun multiLineInputPopup(
@@ -66,11 +97,25 @@ object PopupUtil : AutoCloseable {
         }
     }
 
+    fun yesOrNoPopup(
+        title: String,
+        headerText: String?,
+        contentText: String
+    ): Boolean {
+        val alert = Alert(Alert.AlertType.CONFIRMATION)
+        alert.title = title
+        alert.headerText = headerText
+        alert.contentText = contentText
+        alert.dialogPane.minHeight = Region.USE_PREF_SIZE
+
+        return alert.showAndWait().get() != ButtonType.CANCEL
+    }
+
     fun infoPopup(
         title: String,
         headerText: String?,
         contentText: String
-    ){
+    ) {
         val alert = Alert(Alert.AlertType.INFORMATION)
         alert.title = title
         alert.headerText = headerText
@@ -80,10 +125,12 @@ object PopupUtil : AutoCloseable {
         alert.show()
     }
 
+    @JvmOverloads
     fun textInputPopup(
         title: String,
         headerText: String?,
-        contentText: String
+        contentText: String,
+        defaultValue: String? = null
     ): String {
         val dialog = TextInputDialog()
 
@@ -91,6 +138,10 @@ object PopupUtil : AutoCloseable {
         dialog.headerText = headerText
         dialog.contentText = contentText
         dialog.dialogPane.minHeight = Region.USE_PREF_SIZE
+
+        if (defaultValue != null){
+            dialog.editor.text = defaultValue
+        }
 
         val result = AtomicReference("")
         dialog.showAndWait().ifPresent { newValue: String ->

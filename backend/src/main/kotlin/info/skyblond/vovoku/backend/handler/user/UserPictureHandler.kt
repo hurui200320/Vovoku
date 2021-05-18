@@ -133,8 +133,8 @@ object UserPictureHandler {
                 }
             }
             .sortedBy { it.tagId }
-            .drop(page.offset)
-            .take(page.limit)
+            .drop(page.offset())
+            .take(page.limit())
             .map {
                 it.toPojo(ctx)
             }

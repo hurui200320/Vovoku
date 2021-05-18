@@ -1,16 +1,11 @@
-package info.skyblond.vovoku.frontend.scenes.user.funtion;
+package info.skyblond.vovoku.frontend.scenes.admin.function;
 
 import info.skyblond.vovoku.commons.JacksonJsonUtil;
-import info.skyblond.vovoku.commons.dl4j.PrototypeDescriptor;
-import info.skyblond.vovoku.commons.dl4j.Updater;
 import info.skyblond.vovoku.commons.models.DatabaseModelInfoPojo;
-import info.skyblond.vovoku.commons.models.ModelCreateRequest;
-import info.skyblond.vovoku.commons.models.ModelTrainingParameter;
 import info.skyblond.vovoku.commons.models.ModelTrainingStatus;
+import info.skyblond.vovoku.commons.models.Page;
 import info.skyblond.vovoku.frontend.Dl4jHelper;
-import info.skyblond.vovoku.frontend.api.user.UserModelApiClient;
-import info.skyblond.vovoku.frontend.api.user.UserPictureApiClient;
-import info.skyblond.vovoku.frontend.api.user.UserPrototypeApiClient;
+import info.skyblond.vovoku.frontend.api.admin.AdminApiClient;
 import info.skyblond.vovoku.frontend.scenes.PopupUtil;
 import info.skyblond.vovoku.frontend.scenes.TableViewTemplate;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -18,7 +13,10 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
@@ -29,27 +27,20 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Objects;
 
-public class UserModelSubLayer extends TableViewTemplate<DatabaseModelInfoPojo> {
-    private final UserModelApiClient modelApiClient;
-    private final UserPictureApiClient pictureApiClient;
-    private final UserPrototypeApiClient prototypeApiClient;
+public class AdminModelSubLayer extends TableViewTemplate<DatabaseModelInfoPojo> {
+    private final AdminApiClient adminApiClient;
 
     private final Button inferButton = new Button("Infer");
 
-    public UserModelSubLayer(
-            UserModelApiClient modelApiClient,
-            UserPictureApiClient pictureApiClient,
-            UserPrototypeApiClient prototypeApiClient
+    public AdminModelSubLayer(
+            AdminApiClient adminApiClient
     ) {
-        this.modelApiClient = modelApiClient;
-        this.pictureApiClient = pictureApiClient;
-        this.prototypeApiClient = prototypeApiClient;
+        this.adminApiClient = adminApiClient;
     }
 
-    private String lastStatus = null;
+    private String lastStatusFilter = null;
+    private Integer userIdFilter = null;
 
     @Override
     public Node getTopRightRoot() {
@@ -60,6 +51,7 @@ public class UserModelSubLayer extends TableViewTemplate<DatabaseModelInfoPojo> 
     @Override
     public Button[] getRightButtons() {
         this.uploadButton.setText("New model");
+        this.uploadButton.setDisable(true);
         this.inferButton.setDisable(true);
         this.inferButton.setOnAction(e -> this.infer());
         var superButtons = super.getRightButtons();
@@ -74,12 +66,14 @@ public class UserModelSubLayer extends TableViewTemplate<DatabaseModelInfoPojo> 
     @Override
     protected void updateFilter() {
         var current = this.configGenMap();
-        current.put("lastStatus", this.lastStatus);
+        current.put("lastStatusFilter", this.lastStatusFilter);
+        current.put("userIdFilter", this.userIdFilter);
 
         try {
             var newFilter = this.configAskUser(current);
             if (newFilter != null) {
-                this.lastStatus = (String) newFilter.get("lastStatus");
+                this.lastStatusFilter = (String) newFilter.get("lastStatusFilter");
+                this.userIdFilter = (Integer) newFilter.get("userIdFilter");
                 this.loadData();
             }
         } catch (Exception e) {
@@ -105,6 +99,12 @@ public class UserModelSubLayer extends TableViewTemplate<DatabaseModelInfoPojo> 
         );
         modelIdColumn.setSortable(false);
 
+        TableColumn<DatabaseModelInfoPojo, Integer> userIdColumn = new TableColumn<>("User id");
+        userIdColumn.setCellValueFactory(
+                param -> new SimpleIntegerProperty(param.getValue().getUserId()).asObject()
+        );
+        userIdColumn.setSortable(false);
+
         TableColumn<DatabaseModelInfoPojo, String> prototypeIdColumn = new TableColumn<>("Prototype");
         prototypeIdColumn.setCellValueFactory(
                 param -> new SimpleStringProperty(param.getValue().getCreateInfo().getPrototypeDescriptionSnapshot().getPrototypeIdentifier())
@@ -125,7 +125,7 @@ public class UserModelSubLayer extends TableViewTemplate<DatabaseModelInfoPojo> 
 
 
         this.tableView.getColumns().addAll(
-                modelIdColumn, prototypeIdColumn, createTimeColumn, statusColumn
+                modelIdColumn, userIdColumn, prototypeIdColumn, createTimeColumn, statusColumn
         );
 
         // initial load
@@ -135,13 +135,23 @@ public class UserModelSubLayer extends TableViewTemplate<DatabaseModelInfoPojo> 
 
     @Override
     protected Triple<Boolean, String, DatabaseModelInfoPojo[]> getOne() {
-        return this.modelApiClient.getOneModel(this.idFilter);
+        var result = this.adminApiClient.queryModel(this.idFilter, null, null, new Page(null, null));
+        if (result.length == 0) {
+            return new Triple<>(false, "Model id not found", result);
+        } else {
+            return new Triple<>(true, "OK", result);
+        }
     }
 
     @Override
     protected Pair<Boolean, String> deleteOne() {
         var id = this.tableView.getSelectionModel().getSelectedItem().getModelId();
-        return this.modelApiClient.deleteOneModel(id);
+        var result = this.adminApiClient.deleteModel(id);
+        if (result) {
+            return new Pair<>(true, "OK");
+        } else {
+            return new Pair<>(false, "Cannot delete model");
+        }
     }
 
     @Override
@@ -149,18 +159,20 @@ public class UserModelSubLayer extends TableViewTemplate<DatabaseModelInfoPojo> 
         var selectedId = this.tableView.getSelectionModel().getSelectedItem().getModelId();
 
         PopupUtil.INSTANCE.doWithProcessingPopup(
-                () -> this.modelApiClient.getOneModel(selectedId),
+                () -> this.adminApiClient.queryModel(selectedId, null, null, new Page(null, null)),
                 result -> {
-                    if (!result.getFirst()) {
-                        PopupUtil.INSTANCE.showError(null, "Error when fetching model: " + result.getSecond());
+                    if (result.length != 1) {
+                        PopupUtil.INSTANCE.showError(null, "Cannot fetch model");
                         return null;
                     }
 
-                    var model = result.getThird()[0];
+                    var model = result[0];
 
                     StringBuilder stringBuilder = new StringBuilder();
                     stringBuilder.append("Model id: ")
                             .append(model.getModelId())
+                            .append("Created by user id ")
+                            .append(model.getUserId())
                             .append("\n---------- Create info ---------- \n")
                             .append(JacksonJsonUtil.INSTANCE.objectToJson(model.getCreateInfo(), true))
                             .append("\n---------- Create info end ----------")
@@ -196,158 +208,6 @@ public class UserModelSubLayer extends TableViewTemplate<DatabaseModelInfoPojo> 
 
     @Override
     protected void uploadOne() {
-        PrototypeDescriptor prototype;
-        try {
-            var re = PopupUtil.INSTANCE.textInputPopup(
-                    "Create Model",
-                    null, "Prototype identifier"
-            );
-            var protoRe = this.prototypeApiClient.getOnePrototype(re);
-            if (!protoRe.getFirst()) {
-                throw new Exception(protoRe.getSecond());
-            }
-            prototype = protoRe.getThird();
-        } catch (Exception e) {
-            PopupUtil.INSTANCE.showError(null, "Invalid prototype identifier: " + e.getLocalizedMessage());
-            return;
-        }
-
-        int batchSize;
-        try {
-            batchSize = Integer.parseInt(PopupUtil.INSTANCE.textInputPopup(
-                    "Create Model",
-                    null, "batchSize"
-            ));
-        } catch (Exception e) {
-            PopupUtil.INSTANCE.showError(null, "Invalid batchSize: " + e.getLocalizedMessage());
-            return;
-        }
-
-        int epochs;
-        try {
-            epochs = Integer.parseInt(PopupUtil.INSTANCE.textInputPopup(
-                    "Create Model",
-                    null, "epochs"
-            ));
-        } catch (Exception e) {
-            PopupUtil.INSTANCE.showError(null, "Invalid epochs: " + e.getLocalizedMessage());
-            return;
-        }
-
-        int[] inputSize = new int[prototype.getInputSizeDim()];
-        for (int i = 0; i < inputSize.length; i++) {
-            try {
-                inputSize[i] = Integer.parseInt(PopupUtil.INSTANCE.textInputPopup(
-                        "Create Model",
-                        prototype.getInputSizeDescription()[i],
-                        "input dim " + (i + 1) + " size"
-                ));
-            } catch (Exception e) {
-                PopupUtil.INSTANCE.showError(null, "Invalid input size: " + e.getLocalizedMessage());
-                return;
-            }
-        }
-        int[] labelSize = new int[prototype.getLabelSizeDim()];
-        for (int i = 0; i < labelSize.length; i++) {
-            try {
-                labelSize[i] = Integer.parseInt(PopupUtil.INSTANCE.textInputPopup(
-                        "Create Model",
-                        prototype.getLabelSizeDescription()[i],
-                        "label dim " + (i + 1) + " size"
-                ));
-            } catch (Exception e) {
-                PopupUtil.INSTANCE.showError(null, "Invalid label size: " + e.getLocalizedMessage());
-                return;
-            }
-        }
-        Updater updater;
-        try {
-            updater = Updater.valueOf(PopupUtil.INSTANCE.textInputPopup(
-                    "Create Model",
-                    "Available updaters: " + Arrays.toString(prototype.getUpdaters()),
-                    "updater name"
-            ));
-            Objects.requireNonNull(updater);
-        } catch (Exception e) {
-            PopupUtil.INSTANCE.showError(null, "Invalid updater: " + e.getLocalizedMessage());
-            return;
-        }
-
-        double[] updaterParameters = new double[updater.getDescription().size()];
-        for (int i = 0; i < updaterParameters.length; i++) {
-            try {
-                updaterParameters[i] = Double.parseDouble(PopupUtil.INSTANCE.textInputPopup(
-                        "Create Model",
-                        updater.getDescription().get(i),
-                        "updater param " + (i + 1) + " value"
-                ));
-            } catch (Exception e) {
-                PopupUtil.INSTANCE.showError(null, "Invalid updater param: " + e.getLocalizedMessage());
-                return;
-            }
-        }
-        double[] networkParameter = new double[prototype.getNetworkParameterDescription().length];
-        for (int i = 0; i < networkParameter.length; i++) {
-            try {
-                networkParameter[i] = Double.parseDouble(PopupUtil.INSTANCE.textInputPopup(
-                        "Create Model",
-                        prototype.getNetworkParameterDescription()[i],
-                        "network param " + (i + 1) + " value"
-                ));
-            } catch (Exception e) {
-                PopupUtil.INSTANCE.showError(null, "Invalid network param: " + e.getLocalizedMessage());
-                return;
-            }
-        }
-        long seed;
-        try {
-            seed = Long.parseLong(PopupUtil.INSTANCE.textInputPopup(
-                    "Create Model",
-                    null, "seed"
-            ));
-        } catch (Exception e) {
-            PopupUtil.INSTANCE.showError(null, "Invalid seed: " + e.getLocalizedMessage());
-            return;
-        }
-
-        var trainingParameter = new ModelTrainingParameter(
-                prototype.getPrototypeIdentifier(),
-                batchSize, epochs,
-                inputSize, labelSize,
-                updater, updaterParameters, networkParameter,
-                seed
-        );
-
-        String datasetName = PopupUtil.INSTANCE.textInputPopup(
-                "Create Model",
-                null, "dataset name"
-        );
-
-        if (datasetName.isBlank()) {
-            PopupUtil.INSTANCE.showError(null, "Invalid dataset name: empty");
-            return;
-        }
-
-        PopupUtil.INSTANCE.doWithProcessingPopupWithoutCancel(
-                () -> this.modelApiClient.trainingNewModel(new ModelCreateRequest(
-                        trainingParameter,
-                        datasetName
-                )),
-                result -> {
-                    if (result.getFirst()) {
-                        this.loadData();
-                    } else {
-                        PopupUtil.INSTANCE.showError(null, "Error when creating model: " + result.getSecond());
-                    }
-                    return null;
-                },
-                e -> {
-                    PopupUtil.INSTANCE.showError(null, "Error when creating model: " + e.getLocalizedMessage());
-                    return null;
-                }
-        );
-
-
     }
 
     /**
@@ -368,15 +228,10 @@ public class UserModelSubLayer extends TableViewTemplate<DatabaseModelInfoPojo> 
                     "Which pic do you want to infer?",
                     "pic id"
             ));
-            var result = this.pictureApiClient.getOnePic(picId);
-            if (!result.getFirst()) {
-                throw new Exception(result.getSecond());
+            bufferedImage = this.adminApiClient.fetchPic(picId);
+            if (bufferedImage == null) {
+                throw new Exception("Cannot fetch pic");
             }
-            var picResult = this.pictureApiClient.fetchPic(result.getThird()[0].getFilePath());
-            if (!picResult.getFirst()) {
-                throw new Exception(result.getSecond());
-            }
-            bufferedImage = picResult.getThird();
         } catch (Exception e) {
             PopupUtil.INSTANCE.showError(null, "Invalid picId: " + e.getLocalizedMessage());
             return;
@@ -391,16 +246,16 @@ public class UserModelSubLayer extends TableViewTemplate<DatabaseModelInfoPojo> 
         }
         modelFile.deleteOnExit();
         PopupUtil.INSTANCE.doWithProcessingPopup(
-                () -> this.modelApiClient.fetchModel(Objects.requireNonNull(model.getFilePath())),
+                () -> this.adminApiClient.fetchModel(model.getModelId()),
                 result -> {
-                    if (!result.getFirst()) {
-                        PopupUtil.INSTANCE.showError(null, "Error when fetching model: " + result.getSecond());
+                    if (result == null) {
+                        PopupUtil.INSTANCE.showError(null, "Cannot fetching model");
                         return null;
                     }
                     // write model to temp file
                     try {
                         var stream = new FileOutputStream(modelFile);
-                        stream.write(result.getThird());
+                        stream.write(result);
                         stream.close();
                     } catch (Exception e) {
                         PopupUtil.INSTANCE.showError(null, "Error when fetching model: " + e.getLocalizedMessage());
@@ -452,6 +307,7 @@ public class UserModelSubLayer extends TableViewTemplate<DatabaseModelInfoPojo> 
 
     @Override
     protected Triple<Boolean, String, DatabaseModelInfoPojo[]> getList() {
-        return this.modelApiClient.listModel(this.lastStatus, this.page, this.size);
+        var result = this.adminApiClient.queryModel(null, this.userIdFilter, this.lastStatusFilter, new Page(this.page, this.size));
+        return new Triple<>(true, "OK", result);
     }
 }

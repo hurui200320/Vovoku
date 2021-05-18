@@ -1,8 +1,9 @@
 package info.skyblond.vovoku.frontend.scenes.user.funtion;
 
 import info.skyblond.vovoku.frontend.api.user.UserApiClient;
+import info.skyblond.vovoku.frontend.scenes.AbstractHomePage;
 import info.skyblond.vovoku.frontend.scenes.PopupUtil;
-import info.skyblond.vovoku.frontend.scenes.user.SubScene;
+import info.skyblond.vovoku.frontend.scenes.SubScene;
 import info.skyblond.vovoku.frontend.scenes.user.login.UserLoginScene;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -13,16 +14,10 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import okhttp3.OkHttpClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class UserHomePage implements SubScene {
-    private final Logger logger = LoggerFactory.getLogger(UserHomePage.class);
-
+public class UserHomePage extends AbstractHomePage {
     private final OkHttpClient httpClient;
     private final UserApiClient userApiClient;
-    private Stage primaryStage;
-    private Scene currentScene;
 
     public UserHomePage(OkHttpClient httpClient, UserApiClient userApiClient) {
         this.httpClient = httpClient;
@@ -36,13 +31,6 @@ public class UserHomePage implements SubScene {
 
         // set up top
         Label accountInfo = new Label();
-//        accountInfo.setPadding(new Insets(5));
-        accountInfo.setStyle("-fx-background-color: #31a547");
-        // account info only take half
-//        accountInfo.prefWidthProperty().bind(top.widthProperty().divide(2));
-//        accountInfo.minWidthProperty().bind(top.widthProperty().divide(2));
-//        accountInfo.prefHeightProperty().bind(top.heightProperty());
-//        accountInfo.minHeightProperty().bind(top.heightProperty());
         this.genTop(root, accountInfo, null);
 
 
@@ -51,13 +39,6 @@ public class UserHomePage implements SubScene {
         exitButton.setOnAction(e -> this.backToUserLogin());
         this.genBottom(root, exitButton);
 
-
-        VBox left = new VBox(10);
-        left.setFillWidth(true);
-        left.setPadding(new Insets(5, 15, 5, 5));
-        left.setStyle("-fx-background-color: #d1d25c");
-        left.setPrefWidth(100);
-        left.setAlignment(Pos.TOP_CENTER);
 
         Button accountButton = new Button("Account");
         accountButton.setMaxWidth(Double.MAX_VALUE);
@@ -103,8 +84,7 @@ public class UserHomePage implements SubScene {
             this.genRight(root, prototypeSubLayer.getRightButtons());
         });
 
-        left.getChildren().addAll(accountButton, pictureButton, modelButton, prototypeButton);
-        root.setLeft(left);
+        genLeft(root, accountButton, pictureButton, modelButton, prototypeButton);
 
         PopupUtil.INSTANCE.doWithProcessingPopupWithoutCancel(
                 () -> this.userApiClient.getAccountApiClient().whoAmI(),
@@ -113,7 +93,7 @@ public class UserHomePage implements SubScene {
                         accountInfo.setText(
                                 "User id: " + result.getThird().getUserId() + "\n" +
                                         "Username: " + result.getThird().getUsername() + "\n" +
-                                        "Token: " + this.userApiClient.getToken$frontend()
+                                        "Token: " + this.userApiClient.getToken()
                         );
                     } else {
                         PopupUtil.INSTANCE.showError(null, "Error when getting account info: " + result.getSecond());
@@ -131,11 +111,6 @@ public class UserHomePage implements SubScene {
         return root;
     }
 
-    @Override
-    public void initScene(Stage stage, Scene scene) {
-        this.primaryStage = stage;
-        this.currentScene = scene;
-    }
 
     private void backToUserLogin() {
         UserLoginScene userLoginScene = new UserLoginScene(this.httpClient);
@@ -144,78 +119,4 @@ public class UserHomePage implements SubScene {
         this.primaryStage.setScene(scene);
     }
 
-    private HBox genTop(BorderPane root, Node n1, Node n2) {
-        HBox top = new HBox(20);
-        top.setFillHeight(true);
-        top.setStyle("-fx-background-color: #0ae3ea");
-        top.setPadding(new Insets(5, 5, 15, 5));
-        top.maxHeightProperty().bind(root.heightProperty().multiply(0.25));
-
-        if (n1 != null) {
-            n1.maxHeight(Double.MAX_VALUE);
-            top.getChildren().add(n1);
-        }
-
-        if (n2 != null) {
-            n2.maxHeight(Double.MAX_VALUE);
-            HBox.setHgrow(n2, Priority.ALWAYS);
-            n2.setStyle("-fx-background-color: #cd05f3");
-            top.getChildren().add(n2);
-        }
-
-        root.setTop(top);
-        return top;
-    }
-
-    private HBox genBottom(BorderPane root, Button exitButton, Button... buttons) {
-        HBox bottom = new HBox(20);
-        bottom.setFillHeight(true);
-        bottom.setPrefHeight(45);
-        bottom.setStyle("-fx-background-color: #ea0a58");
-        bottom.setPadding(new Insets(15, 5, 5, 5));
-        bottom.setAlignment(Pos.CENTER_RIGHT);
-        bottom.maxHeightProperty().bind(root.heightProperty().multiply(0.25));
-
-        HBox buttonHBox = new HBox(20);
-        buttonHBox.setStyle("-fx-background-color: #eac50a");
-        buttonHBox.getChildren().addAll(buttons);
-
-        for (Button b : buttons) {
-            b.setMaxHeight(Double.MAX_VALUE);
-        }
-
-        // go back to User login
-        buttonHBox.maxHeight(Double.MAX_VALUE);
-        exitButton.setMaxHeight(Double.MAX_VALUE);
-        bottom.getChildren().addAll(buttonHBox, exitButton);
-        root.setBottom(bottom);
-        return bottom;
-    }
-
-    private VBox genRight(BorderPane root, Button... buttons) {
-        VBox right = new VBox(10);
-        right.setFillWidth(true);
-        right.setPadding(new Insets(5, 5, 5, 15));
-        right.setStyle("-fx-background-color: #2d7fe3");
-        right.setPrefWidth(100);
-        right.setAlignment(Pos.TOP_CENTER);
-
-        for (Button b : buttons) {
-            b.setMaxWidth(Double.MAX_VALUE);
-            b.setWrapText(true);
-            b.setAlignment(Pos.CENTER);
-        }
-
-        right.getChildren().addAll(buttons);
-        root.setRight(right);
-        return right;
-    }
-
-    private Node genCenter(BorderPane root, Node center) {
-        if (center != null) {
-            center.setStyle("-fx-background-color: #35a17f");
-        }
-        root.setCenter(center);
-        return center;
-    }
 }

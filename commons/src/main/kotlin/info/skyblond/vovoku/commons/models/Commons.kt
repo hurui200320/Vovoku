@@ -1,6 +1,5 @@
 package info.skyblond.vovoku.commons.models
 
-import com.fasterxml.jackson.annotation.JsonClassDescription
 import com.fasterxml.jackson.annotation.JsonFormat
 import info.skyblond.vovoku.commons.dl4j.PrototypeDescriptor
 import java.sql.Timestamp
@@ -47,7 +46,7 @@ data class PictureTagEntry(
     val tag: Int
 ) {
     init {
-        require(channelCount == 1 || channelCount == 3) { "Field 'channelCount' must 1 or 3" }
+        require(channelCount in listOf(1, 3, 4)) { "Field 'channelCount' must be 1, 3 or 4: $channelCount" }
         require(width >= 0) { "Field 'width' must bigger than 0" }
         require(height >= 0) { "Field 'height' must bigger than 0" }
         require(tag in 0..9) { "Field 'tag' must in range 0 to 9" }

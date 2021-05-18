@@ -51,11 +51,11 @@ class AdminApiClient(
     /**
      * Make query and parse the result
      * */
-    private fun <T> query(body: Any, endPoint: String): List<T> {
+    private fun <T> query(body: Any, endPoint: String, clazz: Class<Array<T>>): Array<T> {
         val json = JacksonJsonUtil.objectToJson(body)
         val response = postJson("$urlPrefix/$endPoint", json)
         if (response.first == 200) {
-            return JacksonJsonUtil.jsonToObject(response.second)
+            return JacksonJsonUtil.jsonToObject(response.second, clazz)
         } else {
             logger.warn("Server response '${response.first}': ${response.second}")
             throw IllegalStateException(response.second)
@@ -75,7 +75,7 @@ class AdminApiClient(
     }
 
 
-    fun queryUser(userId: Int?, username: String?, page: Page): List<DatabaseUserPojo> {
+    fun queryUser(userId: Int?, username: String?, page: Page): Array<DatabaseUserPojo> {
         val requestBody = AdminRequest(
             CRUD.READ,
             mutableMapOf<String, Any>()
@@ -85,7 +85,7 @@ class AdminApiClient(
                 },
             page
         )
-        return query(requestBody, usersEndPoint)
+        return query(requestBody, usersEndPoint, Array<DatabaseUserPojo>::class.java)
     }
 
     fun addUser(username: String, hashedPassword: String): Boolean {
@@ -93,9 +93,10 @@ class AdminApiClient(
             CRUD.CREATE,
             mutableMapOf<String, Any>()
                 .also { map ->
-                    map[AdminRequest.USER_ID_KEY] = username
+                    map[AdminRequest.USERNAME_KEY] = username
                     map[AdminRequest.USER_PASSWORD_KEY] = hashedPassword
-                }
+                },
+            Page(null, null)
         )
         return doRequest(requestBody, usersEndPoint)
     }
@@ -108,91 +109,86 @@ class AdminApiClient(
                     userId?.let { map[AdminRequest.USER_ID_KEY] = it }
                     username?.let { map[AdminRequest.USERNAME_KEY] = it }
                     hashedPassword?.let { map[AdminRequest.USER_PASSWORD_KEY] = it }
-                }
+                },
+            Page(null, null)
         )
         return doRequest(requestBody, usersEndPoint)
     }
 
-    fun deleteUser(userId: Int?, username: String?): Boolean {
+    fun deleteUser(userId: Int): Boolean {
         val requestBody = AdminRequest(
             CRUD.DELETE,
             mutableMapOf<String, Any>()
                 .also { map ->
-                    userId?.let { map[AdminRequest.USER_ID_KEY] = it }
-                    username?.let { map[AdminRequest.USERNAME_KEY] = it }
-                }
+                    userId.let { map[AdminRequest.USER_ID_KEY] = it }
+                },
+            Page(null, null)
         )
         return doRequest(requestBody, usersEndPoint)
     }
 
 
-    fun queryPicture(tagId: Int?, userId: Int?, filePath: String?, page: Page): List<DatabasePictureTagPojo> {
+    fun queryPicture(
+        tagId: Int?,
+        userId: Int?,
+        forTrain: Boolean?,
+        folderName: String?,
+        page: Page
+    ): Array<DatabasePictureTagPojo> {
         val requestBody = AdminRequest(
             CRUD.READ,
             mutableMapOf<String, Any>()
                 .also { map ->
                     tagId?.let { map[AdminRequest.TAG_ID_KEY] = it }
                     userId?.let { map[AdminRequest.USER_ID_KEY] = it }
-                    filePath?.let { map[AdminRequest.FILE_PATH_KEY] = it }
-                },
-            page
-        )
-        return query(requestBody, picturesEndPoint)
-    }
-
-    fun updatePicture(tagId: Int?, tagData: Int?, forTrain: Boolean?, folderName: String?): Boolean {
-        val requestBody = AdminRequest(
-            CRUD.UPDATE,
-            mutableMapOf<String, Any>()
-                .also { map ->
-                    tagId?.let { map[AdminRequest.TAG_ID_KEY] = it }
-                    tagData?.let { map[AdminRequest.TAG_DATA_KEY] = it }
                     forTrain?.let { map[AdminRequest.TAG_FOR_TRAIN_KEY] = it }
                     folderName?.let { map[AdminRequest.TAG_FOLDER_NAME_KEY] = it }
-                }
+                },
+            page
         )
-        return doRequest(requestBody, picturesEndPoint)
+        return query(requestBody, picturesEndPoint, Array<DatabasePictureTagPojo>::class.java)
     }
 
-    fun deletePicture(tagId: Int?, userId: Int?, filePath: String?): Boolean {
+    fun deletePicture(tagId: Int?): Boolean {
         val requestBody = AdminRequest(
             CRUD.DELETE,
             mutableMapOf<String, Any>()
                 .also { map ->
                     tagId?.let { map[AdminRequest.TAG_ID_KEY] = it }
-                    userId?.let { map[AdminRequest.USER_ID_KEY] = it }
-                    filePath?.let { map[AdminRequest.FILE_PATH_KEY] = it }
-                }
+                },
+            Page(null, null)
         )
         return doRequest(requestBody, picturesEndPoint)
     }
 
 
-    fun queryModel(modelId: Int?, userId: Int?, filePath: String?, lastStatus: ModelTrainingStatus?, page: Page): List<DatabaseModelInfoPojo> {
+    fun queryModel(
+        modelId: Int?,
+        userId: Int?,
+        lastStatus: String?,
+        page: Page
+    ): Array<DatabaseModelInfoPojo> {
         val requestBody = AdminRequest(
             CRUD.READ,
             mutableMapOf<String, Any>()
                 .also { map ->
                     modelId?.let { map[AdminRequest.MODEL_ID_KEY] = it }
                     userId?.let { map[AdminRequest.USER_ID_KEY] = it }
-                    filePath?.let { map[AdminRequest.FILE_PATH_KEY] = it }
-                    lastStatus?.let { map[AdminRequest.MODEL_LAST_STATUS_KEY] = it.name }
+                    lastStatus?.let { map[AdminRequest.MODEL_LAST_STATUS_KEY] = it }
                 },
             page
         )
-        return query(requestBody, modelsEndPoint)
+        return query(requestBody, modelsEndPoint, Array<DatabaseModelInfoPojo>::class.java)
     }
 
-    fun deleteModel(modelId: Int?, userId: Int?, filePath: String?, lastStatus: ModelTrainingStatus?): Boolean {
+    fun deleteModel(modelId: Int?): Boolean {
         val requestBody = AdminRequest(
             CRUD.DELETE,
             mutableMapOf<String, Any>()
                 .also { map ->
                     modelId?.let { map[AdminRequest.MODEL_ID_KEY] = it }
-                    userId?.let { map[AdminRequest.USER_ID_KEY] = it }
-                    filePath?.let { map[AdminRequest.FILE_PATH_KEY] = it }
-                    lastStatus?.let { map[AdminRequest.MODEL_LAST_STATUS_KEY] = it.name }
-                }
+                },
+            Page(null, null)
         )
         return doRequest(requestBody, modelsEndPoint)
     }
@@ -205,6 +201,7 @@ class AdminApiClient(
                     AdminRequest.FILE_TYPE_KEY to AdminRequest.FILE_TYPE_VALUE_PICTURE,
                     AdminRequest.FILE_ID_KEY to picId
                 ),
+                Page(null, null)
             )
         )
 
@@ -243,6 +240,7 @@ class AdminApiClient(
                     AdminRequest.FILE_TYPE_KEY to AdminRequest.FILE_TYPE_VALUE_MODEL,
                     AdminRequest.FILE_ID_KEY to modelId
                 ),
+                Page(null, null)
             )
         )
 

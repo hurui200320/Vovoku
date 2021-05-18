@@ -2,7 +2,8 @@ package info.skyblond.vovoku.frontend.scenes.admin.login;
 
 import info.skyblond.vovoku.frontend.api.admin.AdminApiClient;
 import info.skyblond.vovoku.frontend.scenes.PopupUtil;
-import info.skyblond.vovoku.frontend.scenes.user.SubScene;
+import info.skyblond.vovoku.frontend.scenes.SubScene;
+import info.skyblond.vovoku.frontend.scenes.admin.function.AdminHomePage;
 import info.skyblond.vovoku.frontend.scenes.user.login.UserLoginScene;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -46,7 +47,7 @@ public class AdminLoginScene implements SubScene {
         root.add(new Label("Server"), 0, 0);
         this.serverTextField = new TextField();
         root.add(this.serverTextField, 1, 0);
-        this.serverTextField.setText("http://localhost:7000/admin");
+        this.serverTextField.setText("http://localhost:7000/");
 
         root.add(new Label("Key"), 0, 1);
         this.aesKeyTextField = new TextField();
@@ -104,7 +105,13 @@ public class AdminLoginScene implements SubScene {
                 this.serverTextField.getText(),
                 keySpec
         );
-        // TODO go to admin hub
+
+        // there is no need to communicate with server
+        // so just jump
+        AdminHomePage adminHomePage = new AdminHomePage(this.httpClient, adminApiClient);
+        Scene scene = new Scene(adminHomePage.getRootLayout(), this.currentScene.getWidth(), this.currentScene.getHeight());
+        adminHomePage.initScene(this.primaryStage, scene);
+        this.primaryStage.setScene(scene);
     }
 
     private void gotoUser() {
