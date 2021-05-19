@@ -176,8 +176,6 @@ public class JedisLock implements AutoCloseable {
         final Lock lock = Lock.fromString(this.jedis.get(this.lockKey));
         // if not from this instance, then return false
         if (!lock.isExpiredOrMine(this.lockUUID)) {
-            System.out.println(lock.uuid);
-            System.out.println(this.lockUUID);
             return lock.uuid == this.lockUUID;
         }
 

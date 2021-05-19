@@ -137,10 +137,14 @@ object CryptoUtil {
     }
 
     fun aesDecrypt(data: ByteArray, key: SecretKey, iv: ByteArray): ByteArray {
-        val cipher = Cipher.getInstance(aesAlgorithm)
-        val spec = GCMParameterSpec(128, iv)
-        cipher.init(Cipher.DECRYPT_MODE, key, spec)
-        return cipher.doFinal(data)
+        return try {
+            val cipher = Cipher.getInstance(aesAlgorithm)
+            val spec = GCMParameterSpec(128, iv)
+            cipher.init(Cipher.DECRYPT_MODE, key, spec)
+            cipher.doFinal(data)
+        } catch (e: Exception){
+            ByteArray(0)
+        }
     }
 
     val defaultIv = "https://github.com/hurui200320/Vovoku".toByteArray(StandardCharsets.UTF_8)

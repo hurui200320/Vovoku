@@ -50,6 +50,7 @@ object ThreadUtil : AutoCloseable {
 
     fun launchDataGenThread(period: Long, unit: TimeUnit) {
         schedule(0, period, unit) {
+            logger.info("Scanning task for generating data")
             RedisUtil.useJedis { jedis ->
                 DatabaseUtil.database.sequenceOf(ModelInfos)
                     .filter { it.lastStatus eq ModelTrainingStatus.INITIALIZING.name }
@@ -92,6 +93,7 @@ object ThreadUtil : AutoCloseable {
 
     fun launchTaskDistributionThread(period: Long, unit: TimeUnit) {
         schedule(0, period, unit) {
+            logger.info("Scanning task for distributing task")
             DatabaseUtil.database.sequenceOf(ModelInfos)
                 .filter { it.lastStatus eq ModelTrainingStatus.DISTRIBUTING.name }
                 .forEach { model ->
