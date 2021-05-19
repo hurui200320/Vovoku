@@ -13,7 +13,6 @@ public class Application extends javafx.application.Application {
 
     private static final OkHttpClient httpClient = new OkHttpClient();
     private static UserLoginScene userLoginScene;
-//    private static final UserLoginScene adminLoginScene = new UserLoginScene();
 
     public static void main(String[] args) {
         Application.userLoginScene = new UserLoginScene(Application.httpClient);
